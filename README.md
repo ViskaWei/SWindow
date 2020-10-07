@@ -1,5 +1,5 @@
 # SymNormSlidingWindows
-
+Vladimir Braverman, Samson Zhou
 ## Run from terminal
     $ ./main.sh 
 

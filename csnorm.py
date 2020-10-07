@@ -3,7 +3,8 @@ import math
 import copy
 import torch
 LARGEPRIME = 2**61-1
-torch.random.manual_seed(42)
+
+# torch.random.manual_seed(42)
 
 class CSNorm(object):
     def __init__(self, id, c, r, device=None):
@@ -21,18 +22,23 @@ class CSNorm(object):
         self.table = torch.zeros((r, c), device=self.device)
         self.id = id
         self.norm = None
-
-        torch.random.manual_seed(42)
-        rand_state = torch.random.get_rng_state()
+        # torch.random.manual_seed(42)
+        # rand_state = torch.random.get_rng_state()
         self.hashes = torch.randint(0, LARGEPRIME, (self.r, 6),
                                dtype=torch.int64, device="cpu")
-        torch.random.set_rng_state(rand_state)
+        # torch.random.set_rng_state(rand_state)
         self.h1 = self.hashes[:,0:1]
         self.h2 = self.hashes[:,1:2]
         self.h3 = self.hashes[:,2:3]
         self.h4 = self.hashes[:,3:4]
         self.h5 = self.hashes[:,4:5]
         self.h6 = self.hashes[:,5:6]
+        # self.h1 = hashes[:,0:1]
+        # self.h2 = hashes[:,1:2]
+        # self.h3 = hashes[:,2:3]
+        # self.h4 = hashes[:,3:4]
+        # self.h5 = hashes[:,4:5]
+        # self.h6 = hashes[:,5:6]
         
         self.norm = torch.zeros(1, dtype=torch.int64, device=self.device)
 #         self.topk = torch.zeros((k,2), dtype=torch.int64, device=self.device)        
@@ -53,9 +59,12 @@ class CSNorm(object):
                                                 minlength=self.c)
         self.get_norm() 
 
-    def get_norm(self):
-        table = torch.clamp(self.table, 0, None)
-        # print(table)
+    def get_norm(self, clamp=True):
+        if clamp:
+            table = torch.clamp(self.table, 0, None)
+        else:
+            table = self.table
+
         norms = torch.norm(table, p=2, dim=0, keepdim=False, out=None)
         # print(norms)
         assert(len(norms)==self.c)

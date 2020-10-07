@@ -3,6 +3,17 @@ import torch
 from csnorm import CSNorm
 from tqdm import tqdm
 
+
+
+# def create_hashes(r):
+#     torch.random.manual_seed(42)
+#     # rand_state = torch.random.get_rng_state()
+#     hashes = torch.randint(0, LARGEPRIME, (r, 6),
+#                             dtype=torch.int64, device="cpu")
+#     # torch.random.set_rng_state(rand_state) 
+#     print('len',len(hashes))   
+#     return hashes
+
 def create_csv(id, c,r, device):
     csv = CSNorm(id, c, r, device=device)
     return csv
@@ -23,7 +34,6 @@ def update_sketchs(id, csvs, item, c,r,device):
     csvs.append(csv0)
     norms = update_norms(csvs, c,r, device, item)
     idxs = kept_sketchs_id(norms)
-#     print(idxs)
     csvsLeft = [csvs[i] for i in idxs]
     del csvs
     normsLeft = norms[list(idxs)]
