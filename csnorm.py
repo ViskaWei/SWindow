@@ -1,8 +1,15 @@
+import numpy as np
+import math
+import copy
+import torch
+LARGEPRIME = 2**61-1
+torch.random.manual_seed(42)
+
 class CSNorm(object):
-    def __init__(self, d, c, r, k=None, device=None):
+    def __init__(self, c, r, d=None, k=None, device=None):
         self.r = r # num of rows
         self.c = c # num of columns
-        self.d = int(d) # vector dimensionality
+#         self.d = int(d) # vector dimensionality
         if device is None:
             device = 'cuda' if torch.cuda.is_available() else 'cpu'
         else:
@@ -27,9 +34,9 @@ class CSNorm(object):
         
         self.norm = torch.zeros(1, dtype=torch.int64, device=self.device)
 #         self.topk = torch.zeros((k,2), dtype=torch.int64, device=self.device)        
-        
+
     def accumulateVec(self, vec):
-        assert(len(vec.size()) == 1)
+        assert(len(vec.size()) == 1 or vec.size()==torch.Size([]))
         signs = (((self.h1 * vec + self.h2) * vec + self.h3) * vec + self.h4)
         signs = ((signs % LARGEPRIME % 2) * 2 - 1).float()
         signs = signs.to(self.device)
@@ -42,39 +49,7 @@ class CSNorm(object):
             self.table[r,:] += torch.bincount(input=bucket,
                                                 weights=sign,
                                                 minlength=self.c)
-    def get_norm():
-        norms = torch.norm(self.table, p=2, dim=1, keepdim=False, out=None, dtype=torch.int64)
-        print(norms.size)
-        assert norms.size == self.c
+    def get_norm(self):
+        norms = torch.norm(self.table, p=2, dim=0, keepdim=False, out=None)
+        assert(len(norms)==self.c)
         return torch.mean(norms)
-    
-#     def _findValues(self, vec):
-#         # computing sign hashes (4 wise independence)
-#         signs = (((self.h1 * vec + self.h2) * vec + self.h3) * vec + self.h4)
-#         signs = ((signs % LARGEPRIME % 2) * 2 - 1).float()
-#         signs = signs.to(self.device)
-
-#         # computing bucket hashes (2-wise independence)
-#         buckets = ((self.h5 * vec) + self.h6) % LARGEPRIME % self.c
-#         buckets = buckets.to(self.device)  
-#         # estimating frequency of input coordinates
-#         d = vec.size()[0]
-#         vals = torch.zeros(self.r, d, device=self.device)
-#         for r in range(self.r):
-#             vals[r] = self.table[r, buckets[r]] * signs[r]
-#         return vals.median(dim=0)[0]     
-            
-#     def query(self, vec):
-#         signs = (((self.h1 * vec + self.h2) * vec + self.h3) * vec + self.h4)
-#         signs = ((signs % LARGEPRIME % 2) * 2 - 1).float()
-#         signs = signs.to(self.device)
-#         # computing bucket hashes (2-wise independence)
-#         buckets = ((self.h5 * vec) + self.h6) % LARGEPRIME % self.c
-#         buckets = buckets.to(self.device)
-#         vals = torch.zeros(self.r, vec.size()[0],dtype=torch.int64, device=self.device)#
-#         for r in range(self.r):
-#             bucket = buckets[r,:]
-#             sign = signs[r,:]           
-#             vals[r] = self.table[r, bucket] * sign
-#         return vals.median(dim=0)[0]
-
