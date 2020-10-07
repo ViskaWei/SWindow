@@ -7,7 +7,7 @@ LARGEPRIME = 2**61-1
 # torch.random.manual_seed(42)
 
 class CSNorm(object):
-    def __init__(self, id, c, r, device=None):
+    def __init__(self, id, norm_fn, c, r, device=None):
         self.r = r # num of rows
         self.c = c # num of columns
 #         self.d = int(d) # vector dimensionality
@@ -23,8 +23,8 @@ class CSNorm(object):
         self.id = id
         self.norm = None
         # torch.random.manual_seed(42)
-        rand_state = torch.random.get_rng_state()
-        torch.random.set_rng_state(rand_state)
+        # rand_state = torch.random.get_rng_state()
+        # torch.random.set_rng_state(rand_state)
         self.hashes = torch.randint(0, LARGEPRIME, (self.r, 6),
                                dtype=torch.int64, device="cpu")
         self.h1 = self.hashes[:,0:1]
@@ -33,16 +33,11 @@ class CSNorm(object):
         self.h4 = self.hashes[:,3:4]
         self.h5 = self.hashes[:,4:5]
         self.h6 = self.hashes[:,5:6]
-        # self.h1 = hashes[:,0:1]
-        # self.h2 = hashes[:,1:2]
-        # self.h3 = hashes[:,2:3]
-        # self.h4 = hashes[:,3:4]
-        # self.h5 = hashes[:,4:5]
-        # self.h6 = hashes[:,5:6]
         
         self.norm = torch.zeros(1, dtype=torch.int64, device=self.device)
+        self.norm_fn = norm_fn
 #         self.topk = torch.zeros((k,2), dtype=torch.int64, device=self.device)        
-
+    
     def accumulateVec(self, vec):
         assert(len(vec.size()) == 1 or vec.size()==torch.Size([]))
         signs = (((self.h1 * vec + self.h2) * vec + self.h3) * vec + self.h4)
@@ -60,12 +55,13 @@ class CSNorm(object):
         self.get_norm() 
 
     def get_norm(self, clamp=False):
-        if clamp:
-            table = torch.clamp(self.table, 0, None)
-        else:
-            table = self.table
-
-        norms = torch.norm(table, p=2, dim=0, keepdim=False, out=None)
+        # if clamp:
+        #     table = torch.clamp(self.table, 0, None)
+        # else:
+        #     table = self.table
+        norms = self.norm_fn(self.table)
         # print(norms)
-        assert(len(norms)==self.c)
+        assert(len(norms)==self.r)
         self.norm = torch.mean(norms)
+
+    

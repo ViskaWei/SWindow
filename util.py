@@ -2,7 +2,7 @@ import numpy as np
 import torch
 from csnorm import CSNorm
 from tqdm import tqdm
-
+from norm import norm_function
 
 
 # def create_hashes(r):
@@ -14,8 +14,8 @@ from tqdm import tqdm
 #     print('len',len(hashes))   
 #     return hashes
 
-def create_csv(id, c,r, device):
-    csv = CSNorm(id, c, r, device=device)
+def create_csv(id, norm_fn, c,r, device):
+    csv = CSNorm(id, norm_fn, c, r, device=device)
     return csv
 
 def update_norm(csv, item):
@@ -29,8 +29,8 @@ def update_norms(csvs, c,r, device, item):
         norms = torch.cat((norms, csv.norm.view(1)), 0)        
     return norms
 
-def update_sketchs(id, csvs, item, c,r,device):
-    csv0 = create_csv(id, c,r,device)
+def update_sketchs(id, norm_fn, csvs, item, c,r,device):
+    csv0 = create_csv(id, norm_fn, c,r,device)
     csvs.append(csv0)
     norms = update_norms(csvs, c,r, device, item)
     idxs = kept_sketchs_id(norms)
@@ -76,10 +76,11 @@ def get_windowed_id(csvs, wId, size =2):
     print('ids',ids,'closet', closeIds)
     return closeIds 
 
-def run(streamTr, c,r,device ,wId):
+def run(normType, streamTr, c,r,device ,wId):
     csvs = []
+    norm_fn = norm_function(normType, isTorch=True)
     for i in tqdm(range(len(streamTr))):
-        csvs, norms = update_sketchs(i, csvs, streamTr[i], c,r,device)
+        csvs, norms = update_sketchs(i,norm_fn, csvs, streamTr[i], c,r,device)
     closeIds = get_windowed_id(csvs, wId)
     print(norms)
     return norms[closeIds].mean()
