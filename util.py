@@ -76,7 +76,7 @@ def get_windowed_id(csvs, wId, size =2):
     print('ids',ids,'closet', closeIds)
     return closeIds 
 
-def run(normType, streamTr, c,r,device ,wId):
+def get_sketched_norm(normType, streamTr, c,r,device ,wId):
     csvs = []
     norm_fn = norm_function(normType, isTorch=True)
     for i in tqdm(range(len(streamTr))):
