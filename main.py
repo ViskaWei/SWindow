@@ -3,12 +3,12 @@ from dataset import *
 import numpy as np
 import logging
 
-n, m, w =2, 1000, 200
+n, m, w =100, 10000, 2000
 assert m > w
 wId = m-w
-# c=int(np.log10(m))
-c = 2
-r=50
+c=int(np.log10(m))
+# c = 2
+r=100
 device='cuda'
 
 stream, exactL2, exactL2w = create_stream(n,m,w)

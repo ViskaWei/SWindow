@@ -23,10 +23,10 @@ class CSNorm(object):
         self.id = id
         self.norm = None
         # torch.random.manual_seed(42)
-        # rand_state = torch.random.get_rng_state()
+        rand_state = torch.random.get_rng_state()
+        torch.random.set_rng_state(rand_state)
         self.hashes = torch.randint(0, LARGEPRIME, (self.r, 6),
                                dtype=torch.int64, device="cpu")
-        # torch.random.set_rng_state(rand_state)
         self.h1 = self.hashes[:,0:1]
         self.h2 = self.hashes[:,1:2]
         self.h3 = self.hashes[:,2:3]
@@ -59,7 +59,7 @@ class CSNorm(object):
                                                 minlength=self.c)
         self.get_norm() 
 
-    def get_norm(self, clamp=True):
+    def get_norm(self, clamp=False):
         if clamp:
             table = torch.clamp(self.table, 0, None)
         else:
