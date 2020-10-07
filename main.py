@@ -13,7 +13,7 @@ item=streamTr[2]
 streamTr0=streamTr[:10]
 
 def main():
-    run(streamTr0,c,r,device)
+    run(streamTr,c,r,device)
 
 
 main()
