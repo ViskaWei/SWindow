@@ -6,7 +6,7 @@ LARGEPRIME = 2**61-1
 torch.random.manual_seed(42)
 
 class CSNorm(object):
-    def __init__(self, c, r, d=None, k=None, device=None):
+    def __init__(self, id, c, r, device=None):
         self.r = r # num of rows
         self.c = c # num of columns
 #         self.d = int(d) # vector dimensionality
@@ -19,6 +19,8 @@ class CSNorm(object):
                 raise ValueError(msg.format(device))
         self.device = device
         self.table = torch.zeros((r, c), device=self.device)
+        self.id = id
+        self.norm = None
 
         torch.random.manual_seed(42)
         rand_state = torch.random.get_rng_state()
@@ -47,9 +49,14 @@ class CSNorm(object):
             bucket = buckets[r,:]
             sign = signs[r,:]
             self.table[r,:] += torch.bincount(input=bucket,
-                                                weights=sign,
+                                               weights=sign,
                                                 minlength=self.c)
+        self.get_norm() 
+
     def get_norm(self):
-        norms = torch.norm(self.table, p=2, dim=0, keepdim=False, out=None)
+        table = torch.clamp(self.table, 0, None)
+        # print(table)
+        norms = torch.norm(table, p=2, dim=0, keepdim=False, out=None)
+        # print(norms)
         assert(len(norms)==self.c)
-        return torch.mean(norms)
+        self.norm = torch.mean(norms)

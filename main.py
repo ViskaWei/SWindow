@@ -1,19 +1,27 @@
 from util import *
+from dataset import *
 import numpy as np
+import logging
 
-c=2
-r=100
+n, m, w =2, 1000, 200
+assert m > w
+wId = m-w
+c=int(np.log10(m))
+# c = 2
+r=1000
 device='cuda'
-n=100
-np.random.seed(42)
-stream = np.random.randint(1,n,size=n)
-# exactL2 = np.linalg.norm(stream, ord=2)
+
+stream, exactL2, exactL2w = create_stream(n,m,w)
+uniformL2w =uniform_sampling(stream, w, sRate=0.1)
+
 streamTr=torch.tensor(stream, dtype=torch.int64)
-item=streamTr[2]
 streamTr0=streamTr[:10]
 
 def main():
-    run(streamTr,c,r,device)
+    print('exact vs uniform L2w', exactL2w, uniformL2w)
+    sketchNorm = run(streamTr,c,r,device, wId)
+    print('sketch L2w', sketchNorm)
+    print('exact L2', exactL2)
 
 
 main()

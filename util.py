@@ -1,36 +1,36 @@
 import numpy as np
 import torch
 from csnorm import CSNorm
+from tqdm import tqdm
 
-def create_csv(c,r, device):
-    csv = CSNorm(c, r, device=device)
+def create_csv(id, c,r, device):
+    csv = CSNorm(id, c, r, device=device)
     return csv
 
 def update_norm(csv, item):
     csv.accumulateVec(item)
-    norm = csv.get_norm()
-    return norm
+    csv.get_norm()
 
 def update_norms(csvs, c,r, device, item):
-    csv0 = create_csv(c,r,device)
-    csvs.append(csv0)
     norms = torch.tensor([], device = device)
     for csv in csvs:
-        norm = update_norm(csv, item)    
-        norms = torch.cat((norms, norm.view(1)), 0)        
+        update_norm(csv, item)    
+        norms = torch.cat((norms, csv.norm.view(1)), 0)        
     return norms
 
-def update_item(csvs, item, c,r,device):
+def update_sketchs(id, csvs, item, c,r,device):
+    csv0 = create_csv(id, c,r,device)
+    csvs.append(csv0)
     norms = update_norms(csvs, c,r, device, item)
-    idxs = update_sketchs(norms)
+    idxs = kept_sketchs_id(norms)
 #     print(idxs)
     csvsLeft = [csvs[i] for i in idxs]
     del csvs
     normsLeft = norms[list(idxs)]
-    print(normsLeft)
+    # print(normsLeft)
     return csvsLeft, normsLeft 
 
-def update_sketchs(norms):
+def kept_sketchs_id(norms):
     l= len(norms)
     if l <3: return list(range(l))
     result = set([])
@@ -57,8 +57,19 @@ def update_sketchs(norms):
         i+=1
     return result
 
-def run(streamTr, c,r,device):
+def get_windowed_id(csvs, wId, size =2):
+    ids = np.array([])
+    for csv in csvs:
+        ids  = np.append(ids, csv.id)
+        del csv
+    closeIds=np.argsort(abs(ids- wId))[:size]
+    print('ids',ids,'closet', closeIds)
+    return closeIds 
+
+def run(streamTr, c,r,device ,wId):
     csvs = []
-    for i in range(len(streamTr)):
-        csvs, norms = update_item(csvs, streamTr[i], c,r,device)
-    return norms
+    for i in tqdm(range(len(streamTr))):
+        csvs, norms = update_sketchs(i, csvs, streamTr[i], c,r,device)
+    closeIds = get_windowed_id(csvs, wId)
+    print(norms)
+    return norms[closeIds].mean()
