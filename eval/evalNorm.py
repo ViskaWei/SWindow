@@ -9,7 +9,6 @@ def get_estimated_norm(normType, stream, n, w, sRate):
     uniformNorm =get_uniform_sampled_norm(norm_fn, stream, n, w, sRate=sRate)
     return exactNorm, uniformNorm
 
-
 def get_freqList(stream, n):
     c = Counter(stream)    
     freqList=[]

@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-from csnorm import CSNorm
+from eval.csnorm import CSNorm
 from tqdm import tqdm
 from norm import norm_function
 
@@ -67,20 +67,23 @@ def kept_sketchs_id(norms):
         i+=1
     return result
 
-def get_windowed_id(csvs, wId, size =2):
+def get_windowed_id(csvs, w, size =2):
     ids = np.array([])
     for csv in csvs:
         ids  = np.append(ids, csv.id)
         del csv
+    wId = ids[-1] - w
     closeIds=np.argsort(abs(ids- wId))[:size]
     print('ids',ids,'closet', closeIds)
     return closeIds 
 
-def get_sketched_norm(normType, streamTr, c,r,device ,wId):
+
+def get_sketched_norm(normType, stream, w, c,  r, device):
     csvs = []
+    streamTr=torch.tensor(stream, dtype=torch.int64, device=device)
     norm_fn = norm_function(normType, isTorch=True)
     for i in tqdm(range(len(streamTr))):
         csvs, norms = update_sketchs(i,norm_fn, csvs, streamTr[i], c,r,device)
-    closeIds = get_windowed_id(csvs, wId)
+    closeIds = get_windowed_id(csvs, w)
     print(norms)
     return norms[closeIds].mean()
