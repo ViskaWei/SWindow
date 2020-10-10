@@ -1,7 +1,7 @@
 import numpy as np
 import logging
 from collections import Counter
-from norm import norm_function
+from util.norm import norm_function
 
 def get_estimated_norm(normType, stream, n, w, sRate):
     norm_fn = norm_function(normType)
@@ -30,5 +30,5 @@ def get_uniform_sampled_norm(norm_fn, stream, n, w, sRate=0.1):
     samplesNorm = norm_fn(freqList)
     # samplesNorm = np.linalg.norm(freqList, ord=2)
     uniformNorm = np.sqrt(samplesNorm**2 / sRate)
-    logging.info('uniform Norm of windowed stream {:0.2f}'.format(uniformNorm))
+    logging.info('uniform Norm of {:0.2f}-sampled windowed stream {:0.2f}'.format(sRate, uniformNorm))
     return uniformNorm

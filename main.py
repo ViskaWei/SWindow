@@ -1,37 +1,48 @@
+import os
 import numpy as np
+import pandas as pd
+from tqdm import tqdm
 import logging
 import cProfile
+from util.util import get_stream, get_norms
 
-from dataset.randomstream import create_random_stream
-from dataset.traffic import get_packet_stream
-from eval.evalNorm import get_estimated_norm
-from eval.evalNormCS import get_sketched_norm
-
-# DATASET ='/home/swei20/SymNormSlidingWindows/data/testdata/equinix-nyc.dirA.20190117-131558.UTC.anon.pcap'
-DATASET ='/home/swei20/SymNormSlidingWindows/data/testdata/test100.pcap'
-n, m, w, sRate =100, 10000, 2000, 0.2
-assert m >= w
-r=int(np.log10(m))
-c=100
-device='cuda'
+# DATASET ='testdata/equinix-nyc.dirA.20190117-131558.UTC.anon.pcap'
+DATADIR ='/home/swei20/SymNormSlidingWindows/data/' 
+DATASET ='testdata/test100.pcap'
+path = os.path.join(DATADIR, DATASET)
+logging.basicConfig(level=logging.INFO)
+device = 'cuda'
 normType=['L2','T10'][0]
-RANDSTREAM, TEST, EVALNORM = 0,0,1
-
+LOADSTREAM, RANDSTREAM, TEST,  = 0,1,1
+EVALNORM = 1
+# NAME = 'randMLoop'
+NAME = 'test'
+# mList = [100, 1000, 10000, 100000, 1000000]
+mList= [10, 100]
+cList =[100]
 
 def main():
-    num = 10 if TEST else None
-    if RANDSTREAM:
-        stream = create_random_stream(n,m)
-    else:
-        stream = get_packet_stream(DATASET, 'len', num=num)
-        n
-    print(stream)
-    if EVALNORM:
-        exactNorm, uniformNorm = get_estimated_norm(normType, stream, n, w, sRate)
-        sketchNorm = get_sketched_norm(normType, stream,w,c,r,device)
-        print('exact {:0.2f}, uniform {:0.2f}, sketch{:0.2f}'.format(exactNorm, uniformNorm,sketchNorm))
-        print('n{}|m{}|w{}|sRate{}|table_c{}r{}'.format(n,m,w,sRate,c,r))
+    wRate, sRate = 0.2, 0.2    
+    assert wRate < 1
+    results = []
+
+    for m in tqdm(mList):
+        n = m
+        stream, m, n = get_stream(NAME, n=n,m=m,path = path,\
+                 isLoad = LOADSTREAM, isRand = RANDSTREAM, isTest=TEST)
+        w = int(m*wRate)
+        for c in cList:
+            output = get_norms(normType, stream, w, m, n, sRate,\
+                        c,r=None, device=device, isNearest=True)
+            results.append(output)
+    out = pd.DataFrame(data = results, columns = ['n','m','w','sRate','c','r', 'exact', 'uniform','sketch'])
+    out.to_csv(f'./out/{NAME}.csv')
+
+
+
+
 
 
 if __name__ == "__main__":
     main()
+ 
