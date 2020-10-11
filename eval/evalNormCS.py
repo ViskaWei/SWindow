@@ -74,18 +74,19 @@ def get_windowed_id(csvs, w, size =2):
         del csv
     wId = ids[-1] - w
     closeIds=np.argsort(abs(ids- wId))[:size]
-    print('ids',ids,'closet', closeIds)
+    # print('ids',ids,'closet', closeIds)
     return closeIds 
 
 
 def get_sketched_norm(normType, stream, w, m, c,  r, device, isNearest = True):
     csvs = []
-    streamTr=torch.tensor(stream, dtype=torch.int64)
+    streamTr=torch.tensor(stream[:m], dtype=torch.int64)
+    assert len(streamTr) == m
     norm_fn = norm_function(normType, isTorch=True)
     for i in tqdm(range(m)):
         csvs, norms = update_sketchs(i,norm_fn, csvs, streamTr[i], c,r,device)
     closeIds = get_windowed_id(csvs, w)
-    print(norms)
+    # print(norms)
     if isNearest:
         return norms[closeIds[0]]
     else:
