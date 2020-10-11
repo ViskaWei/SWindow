@@ -1,13 +1,21 @@
 import os
 import numpy as np
 import logging
-# from dataset.traffic import get_packet_stream
+from dataset.traffic import get_packet_stream, get_sniffed_stream
+
+def load_traffic_stream(ftr, isTest, isLoad, m, pckPath):
+    if isLoad:
+        return preload_traffic_stream(ftr, isTest, m)
+    else:
+        return get_sniffed_stream(ftr, pckPath, m = m, save=False)
+        
 
 
-def load_traffic_stream(ftr, isTest, m):
+def preload_traffic_stream(ftr, isTest, m):
     path = get_traffic_stream_path(ftr, isTest, m=m, sDir='data/stream/traffic_')
     stream = np.loadtxt(path)
     return stream
+
 
 def get_traffic_stream_path(ftr, isTest, m, sDir='data/stream/traffic_'):
     if isTest:
@@ -30,6 +38,7 @@ def get_stream_range(stream, n=None, ftr=None):
         return 1500
     else:
         return max(stream)
+
         # else:
         # if isRand:
         #     stream = create_random_stream(n,m)

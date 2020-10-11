@@ -10,31 +10,34 @@ from eval.evalNorm import get_estimated_norm
 from eval.evalNormCS import get_sketched_norm
 
 
-def get_stream(NAME, ftr=None, n=None,m=None,path = None, isLoad = True, isRand = False, isTest=False):
-    if isLoad:
-        stream = load_traffic_stream(ftr,isTest, m)
+def get_stream(NAME, ftr=None, n=None,m=None,pckPath = None, isLoad = True, isRand = False, isTest=False):
+    if isRand:
+        stream = create_random_stream(n,m)
     else:
-        raise 'to do sniff in commandline'
+        stream = load_traffic_stream(ftr, isTest, isLoad, m, pckPath)
     n = get_stream_range(stream, n=n, ftr=ftr)
     m = len(stream)
     # print(m, n)
     return stream, m, n
 
 def get_norms(normType, stream, w, m, n, sRate, c,r=None, device=None, isNearest=True):
-    exactNorm, uniformNorm = get_estimated_norm(normType, stream, n, w, sRate)
+    # exactNorm, uniformNorm = get_estimated_norm(normType, stream, n, w, sRate)
+    exactNorm, uniformNorm =1,1
     if r is None: r = int(np.log(m/0.05))
     device='cuda'
     sketchNorm = get_sketched_norm(normType, stream,w, m, c,r,device, isNearest)
     sketchNorm = sketchNorm.data.cpu().numpy()
     logging.info('exact {:0.2f}, uniform {:0.2f}, sketch{:0.2f}'.format(exactNorm, uniformNorm,sketchNorm))
-    logging.info('n{}|m{}|w{}|sRate{}|table_c{}r{}'.format(n,m,w,sRate,c,r))    
-    output = [n,m,w,sRate,c,r, exactNorm, uniformNorm,sketchNorm]
+    logging.info('n{}|m{}|w{}|sRate{}|table_c{}r{}'.format(n,m,w,sRate,c,r))   
+    errCs = abs(exactNorm-sketchNorm)/sketchNorm
+    errUn = abs(exactNorm-uniformNorm)/uniformNorm 
+    cr = np.log2(c*r)
+    output = [n,m,w,sRate,c,r, cr, exactNorm, uniformNorm,sketchNorm, errCs, errUn]
+    logging.info(output)
     return output
 
 def get_analyze_pd(outputs, NAME):
-    out = pd.DataFrame(data = outputs, columns = ['n','m','w','sRate','c','r', 'exact', 'uniform','sketch'])
-    out['sketchErr'] = abs(out['exact'] - out['sketch'])/out['exact']
-    out['uniformErr'] = abs(out['exact'] - out['uniform'])/out['exact']
+    out = pd.DataFrame(data = outputs, columns = ['n','m','w','sRate','c','r','table', 'exact', 'uniform','sketch','errCs','errUn'])
     out.to_csv(f'./out/{NAME}.csv', index = False)
 
 def get_name(isRand, ftr=None,isClosest=None, add=''):

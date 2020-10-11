@@ -6,48 +6,36 @@ from ipaddress import IPv4Address as ipv4
 # DATAPATH ='/home/swei20/SymNormSlidingWindows/data/testdata/equinix-nyc.dirA.20190117-131558.UTC.anon.pcap'
 
 
-def get_packet_stream(DATAPATH, name, m=-1):
+def get_packet_stream(DATAPATH, ftr, m=-1):
     stream = []
-    query = get_query_fn(name, stream)
+    query = get_query_fn(ftr, stream)
     print('sniffing packet please wait')
     if m is None: m = -1
-    sniff(filter="tcp",offline= DATAPATH,count= m, store = 0,\
+    sniff(offline= DATAPATH,count= m, store = 0,\
         prn=lambda x: stream.append(x.len))
-    return stream, len(stream)
+    return stream
 
-
-def load_all_packets(DATAPATH, query):
-    packets = rdpcap(DATAPATH)
-    stream = []
-    for i in tqdm(range(len(stream))):
-        stream.append(query(packets[i]))
-    return packets
-
-def get_packet_iter(packets):
-    packetsIter = iter(packets)
-    return packetsIter
-
-def get_traffic_stream(NAME, DATASET, m = None):
+def get_sniffed_stream(ftr, DATASET, m = None, save=False):
     out=[]
-    if NAME == 'src':
+    if ftr == 'src':
         query = lambda x: out.append(int(ipv4(x.src)))
-        level = 'ip'
-    if NAME == 'dst':
+    elif ftr == 'dst':
         query = lambda x: out.append(int(ipv4(x.dst)))
-        level = 'ip'
-    elif NAME =='sport':
+    elif ftr =='sport':
         query = lambda x: out.append(x.sport)
-        level = 'ip'
-    elif NAME =='dport':
-        level = 'ip'
+    elif ftr =='dport':
         query = lambda x: out.append(x.dport)
-    elif NAME =='len':
-        level = 'ip'
+    elif ftr =='len':
         query = lambda x: out.append(x.len)      
-    sniff(filter=level, offline=DATASET, prn=query,count= m, store = 0)
-    print(m, out)
-    if m >10:
-        np.savetxt(f'/home/swei20/SymNormSlidingWindows/data/stream/traffic_{NAME}.txt', out)
+    sniff(offline=DATASET, prn=query,count= m, store = 0)
+    print(m, out[:5])
+    if save:
+        if (m <= 1000) and (m >10 ):
+            np.savetxt(f'/home/swei20/SymNormSlidingWindows/test/data/stream/traffic_{ftr}_m{m}.txt', out)
+        elif (m >1000) or (m ==-1):
+            np.savetxt(f'/home/swei20/SymNormSlidingWindows/data/stream/traffic_{ftr}.txt', out)
+    return out
+
 
 def get_query_fn(name, out):
     if name == 'len':
@@ -59,3 +47,17 @@ def get_query_fn(name, out):
         return lambda x: query_len(x, out)
     if name == 'src':
         return lambda x: out.append(x.src)
+
+def test_sniff(DATASET):
+    sniff(offline=DATASET, prn=lambda x:x.len, count=10, store = 0)
+
+def load_all_packets(DATAPATH, query):
+    packets = rdpcap(DATAPATH)
+    stream = []
+    for i in tqdm(range(len(stream))):
+        stream.append(query(packets[i]))
+    return packets
+
+def get_packet_iter(packets):
+    packetsIter = iter(packets)
+    return packetsIter
