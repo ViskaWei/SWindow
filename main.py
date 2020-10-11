@@ -4,66 +4,87 @@ import pandas as pd
 from tqdm import tqdm
 import logging
 import cProfile
-from util.util import get_stream, get_norms, get_analyze_pd, get_name
+from util.util import get_name, get_stream, get_analyze_pd 
 from dataset.traffic import test_sniff
+from evals.evalNorm import get_estimated_norm
+from evals.evalNormCS import get_sketched_norm
 DATADIR ='/home/swei20/SymNormSlidingWindows/data' 
-DATASET ='testdata/equinix-nyc.dirA.20190117-131558.UTC.anon.pcap'
+PCKSET ='/home/swei20/SymNormSlidingWindows/test/data/packets/equinix-nyc.dirA.20190117-131558.UTC.anon.pcap'
 TESTSET = '/home/swei20/SymNormSlidingWindows/test/data/packets/test100.pcap'
 STREAMPATH = 'traffic'
-# DATASET ='testdata/test100.pcap'
-path = os.path.join(DATADIR, DATASET)
+# path = os.path.join(DATADIR, DATASET)
 device = 'cuda'
 normType=['L2','T10'][0]
-LOAD, RANDSTREAM = 0,0
-TEST = 1
-CSLOOP = TEST and 0
-
-# w = min(int(m*wRate), 1000)
-# assert wRate < 1
-
-# def main():
-#     test_sniff(TESTSET)
 
 def main():
+    LOAD, RAND = 1,0
+    TEST = 0
+    CSLOOP = (not TEST) and 0
+    MLOOP = (not CSLOOP)
     if TEST:
-        mList ,cList, rList= [10], [10],[2]
+        mList ,cList, rList= [100], [10],[2]
         suffix = 'test'
         path = TESTSET
+        MLOOP = 1
+        cr = np.log2(cList[0]*rList[0])
+        colName = ['n','m','w','sRate','c','r', 'cr', 'ex', 'un','cs','errCs','errUn']
     else:
+        path = PCKSET
         if CSLOOP:
             mList=[10000]
             cList = [2**6, 2**7, 2**8, 2**9, 2**10]
-            rList = [2**2, 2**3]
-            suffix = '_csL_'
-        else:
+            rList = [2**2]
+            suffix = f'_csL_m{mList[-1]}_'
+            colName = ['n','m','w','c','r','cr', 'ex','cs','errCs']
+        elif MLOOP:
+            # mList = [100,300]
             mList = [100, 500, 1000, 5000, 10000, 50000]
-            # mList = [100000, 500000, 100000, 500000, 974000]        
-            cList =[2*10]
-            rList = [None]
-            suffix = '_mL_'
+            # mList = [5000, 10000, 50000, 100000, 500000]        
+            cList =[2**10]
+            # rList = [2**3]
+            rList = None
+            if rList is None:
+                suffix = f'_mL_c{cList[0]}_'
+            else:
+                cr = np.log2(cList[0]*rList[0])
+                suffix = f'_mL_t{cr}_'
+            colName = ['n','m','w','sRate','c','r', 'cr', 'ex', 'un','cs','errCs','errUn']
+        else:
+            pass
 
     ftr = ['sport', 'src'][1]
-    wRate, w, sRate = 0.1, 10000, 0.1    
-    NAME, logName = get_name(RANDSTREAM, ftr=ftr, add=suffix)
+    wRate, w, sRate = 0.1, 50000, 0.1    
+    NAME, logName = get_name(RAND, ftr=ftr, add=suffix)
     logging.basicConfig(filename = f'{logName}.log', level=logging.INFO)
 
     results = []
     n=None
     stream, m,n = get_stream(NAME, ftr=ftr, n=n,m=mList[-1],pckPath = path,\
-                 isLoad = LOAD, isRand = RANDSTREAM, isTest=TEST)
-
+                 isLoad = LOAD, isRand = RAND, isTest=TEST)
+    logging.info('Stream Prepared. Estimating Norms...')
     for m in tqdm(mList):    
         stream0 = stream[:m]
         w = min(int(m*wRate), 10000)
-
+        normEx, normUn,errUn = get_estimated_norm(normType, stream, n, w, sRate=sRate,getUniform=MLOOP)
+        
         for c in tqdm(cList):
+            if rList is None: 
+                r = int(np.log(m/0.05))
+                cr = int(np.log2(c*r))
+                rList=[r]
             for r in rList:
-                output = get_norms(normType, stream0, w, m, n, sRate,\
-                        int(c),r=int(r), device=device, isNearest=True)
+                normCs = get_sketched_norm(normType, stream,w, m, int(c),int(r),device, \
+                                                isNearest=True, toNumpy=True)
+                errCs = abs(normEx - normCs)/normCs
+                if CSLOOP:
+                    cr = int(np.log2(c*r))
+                    output = [n,m,w,c,r, cr, normEx,normCs, errCs]
+                elif MLOOP:
+                    output = [n,m,w,sRate,c,r,cr, normEx, normUn,normCs, errCs, errUn]
+                logging.info(output)
                 results.append(output)
-        # print(results)
 
-    get_analyze_pd(results, NAME)
+    get_analyze_pd(results, NAME, colName)
 
 
 

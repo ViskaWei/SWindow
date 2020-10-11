@@ -2,7 +2,7 @@ import numpy as np
 import torch
 from tqdm import tqdm
 from util.norm import norm_function
-from eval.csnorm import CSNorm
+from evals.csnorm import CSNorm
 
 
 # def create_hashes(r):
@@ -59,7 +59,7 @@ def kept_sketchs_id(norms):
                     result.add(j-1)                    
                 i = j - 1
                 found = True
-                break;
+                break
             j+=1
         if not found and i != l-1: 
             result.add(l-1)
@@ -78,16 +78,19 @@ def get_windowed_id(csvs, w, size =2):
     return closeIds 
 
 
-def get_sketched_norm(normType, stream, w, m, c,  r, device, isNearest = True):
+def get_sketched_norm(normType, stream, w, m, c, r, device, isNearest = True, toNumpy=True):
     csvs = []
     streamTr=torch.tensor(stream[:m], dtype=torch.int64)
     assert len(streamTr) == m
     norm_fn = norm_function(normType, isTorch=True)
+    # for i in range(m):
     for i in tqdm(range(m)):
         csvs, norms = update_sketchs(i,norm_fn, csvs, streamTr[i], c,r,device)
     closeIds = get_windowed_id(csvs, w)
     # print(norms)
     if isNearest:
-        return norms[closeIds[0]]
+        norm = norms[closeIds[0]]
     else:
-        return norms[closeIds].mean()
+        norm = norms[closeIds].mean()
+    if toNumpy: norm = float(norm.cpu().detach().numpy())
+    return norm
