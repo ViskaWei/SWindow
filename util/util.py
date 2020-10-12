@@ -31,16 +31,18 @@ def get_stream(NAME, ftr=None, n=None,m=None,pckPath = None, isLoad = True, isRa
 #     return output
 
 def get_analyze_pd(outputs, outName, colName):
-    out = pd.DataFrame(data = outputs, columns = colName)
-    print(out)
-    out.to_csv(f'./out/{outName}.csv', index = False)
+    resultPd = pd.DataFrame(data = outputs, columns = colName)
+    print(resultPd)
+    resultPd.to_csv(f'./out/{outName}.csv', index = False)
+    return None
 
 
-def get_name(isRand, ftr=None,isClosest=None, add=''):
+def get_name(isRand, normType, ftr=None,isClosest=None, add=''):
+    name = normType + '_'
     if isRand:
-        name ='rand_'
+        name =name + 'rand_'
     elif ftr is not None:
-        name = 'trff_' + ftr + '_'
+        name = name + ftr + '_'
     if isClosest:
         name = name + 'c_'
     now = datetime.now()

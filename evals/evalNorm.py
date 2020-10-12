@@ -23,7 +23,7 @@ def get_freqList(stream, n=None, m=None):
         assert len(freqList) == n
     else:
         freqList = list(c.values())
-    logging.info('Freqlist{}'.format(freqList))
+    # logging.info('Freqlist{}'.format(freqList))
     return freqList
 
 

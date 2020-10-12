@@ -20,6 +20,10 @@ def norm_function(name, isTorch=False):
         except: 
             raise 'enter # for k in Tk'
         if isTorch:
-            return lambda x: torch.norm(x, p=p, dim=1, keepdim=False, out=None)
+            def topk_norm_torch(x):
+                xTopk=torch.sort(abs(x), dim = 1, descending=True)[0][:,:k]
+                normTopk = torch.sum(xTopk, dim=1).float()
+                return normTopk
+            return topk_norm_torch
         else:
             return lambda x: sum(np.sort([abs(i) for i in x])[::-1][:k])

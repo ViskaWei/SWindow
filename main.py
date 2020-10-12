@@ -14,11 +14,10 @@ TESTSET = '/home/swei20/SymNormSlidingWindows/test/data/packets/test100.pcap'
 STREAMPATH = 'traffic'
 # path = os.path.join(DATADIR, DATASET)
 device = 'cuda'
-normType=['L2','T10'][0]
 
 def main():
     LOAD, RAND = 1,0
-    TEST = 0
+    TEST = 1
     CSLOOP = (not TEST) and 0
     MLOOP = (not CSLOOP)
     if TEST:
@@ -31,30 +30,31 @@ def main():
     else:
         path = PCKSET
         if CSLOOP:
-            mList=[10000]
+            mList=[100000]
             cList = [2**6, 2**7, 2**8, 2**9, 2**10]
-            rList = [2**2]
-            suffix = f'_csL_m{mList[-1]}_'
+            rList = [2**3, 12, 2**4]
+            suffix = f'csL_m{mList[-1]}_'
             colName = ['n','m','w','c','r','cr', 'ex','cs','errCs']
         elif MLOOP:
-            # mList = [100,300]
-            mList = [100, 500, 1000, 5000, 10000, 50000]
+            mList = [100,300]
+            # mList = [100, 500, 1000, 5000, 10000, 50000]
             # mList = [5000, 10000, 50000, 100000, 500000]        
-            cList =[2**10]
+            cList =[2**7]
             # rList = [2**3]
             rList = None
             if rList is None:
-                suffix = f'_mL_c{cList[0]}_'
+                suffix = f'mL_c{cList[0]}_'
             else:
                 cr = np.log2(cList[0]*rList[0])
-                suffix = f'_mL_t{cr}_'
+                suffix = f'mL_t{cr}_'
             colName = ['n','m','w','sRate','c','r', 'cr', 'ex', 'un','cs','errCs','errUn']
         else:
             pass
-
-    ftr = ['sport', 'src'][1]
-    wRate, w, sRate = 0.1, 50000, 0.1    
-    NAME, logName = get_name(RAND, ftr=ftr, add=suffix)
+    k = 2**5
+    normType=['L2',f'T{k}'][1]
+    ftr = ['sport', 'src'][0]
+    wRate, w, sRate = 0.2, 50000, 0.1    
+    NAME, logName = get_name(RAND, normType, ftr=ftr, add=suffix)
     logging.basicConfig(filename = f'{logName}.log', level=logging.INFO)
 
     results = []
