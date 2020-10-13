@@ -17,8 +17,8 @@ device = 'cuda'
 
 def main():
     LOAD, RAND = 1,0
-    TEST = 1
-    CSLOOP = (not TEST) and 0
+    TEST = 0
+    CSLOOP = (not TEST) and 1
     MLOOP = (not CSLOOP)
     if TEST:
         mList ,cList, rList= [100], [10],[2]
@@ -30,16 +30,19 @@ def main():
     else:
         path = PCKSET
         if CSLOOP:
-            mList=[100000]
-            cList = [2**6, 2**7, 2**8, 2**9, 2**10]
-            rList = [2**3, 12, 2**4]
+            mList=[10000]
+            # cList = [2**8]
+            cList = [2**4, 2**5, 2**6, 2**7, 2**8, 2**9]
+            # cList = [2**6, 2**7, 2**8, 2**9, 2**10, 2**11, 2**13]
+            rList = None
+            # rList = [4,8,12,16,20]
             suffix = f'csL_m{mList[-1]}_'
             colName = ['n','m','w','c','r','cr', 'ex','cs','errCs']
         elif MLOOP:
-            mList = [100,300]
-            # mList = [100, 500, 1000, 5000, 10000, 50000]
+            # mList = [100,300]
+            mList = [100, 500, 1000, 5000, 10000, 50000]
             # mList = [5000, 10000, 50000, 100000, 500000]        
-            cList =[2**7]
+            cList =[2**4]
             # rList = [2**3]
             rList = None
             if rList is None:
@@ -50,32 +53,39 @@ def main():
             colName = ['n','m','w','sRate','c','r', 'cr', 'ex', 'un','cs','errCs','errUn']
         else:
             pass
+    if RAND: 
+        n = 100
+        mList = [1000]
+    else:
+        n = None
+    wRate, w, sRate = 0.1, 50000, 0.1    
     k = 2**5
-    normType=['L2',f'T{k}'][1]
+    normType=['L2',f'T{k}'][0]
     ftr = ['sport', 'src'][0]
-    wRate, w, sRate = 0.2, 50000, 0.1    
     NAME, logName = get_name(RAND, normType, ftr=ftr, add=suffix)
     logging.basicConfig(filename = f'{logName}.log', level=logging.INFO)
 
     results = []
-    n=None
     stream, m,n = get_stream(NAME, ftr=ftr, n=n,m=mList[-1],pckPath = path,\
                  isLoad = LOAD, isRand = RAND, isTest=TEST)
     logging.info('Stream Prepared. Estimating Norms...')
     for m in tqdm(mList):    
         stream0 = stream[:m]
-        w = min(int(m*wRate), 10000)
+        w = min(int(m*wRate), 1000)
         normEx, normUn,errUn = get_estimated_norm(normType, stream, n, w, sRate=sRate,getUniform=MLOOP)
         
         for c in tqdm(cList):
+            if c > m: continue
             if rList is None: 
-                r = int(np.log(m/0.05))
-                cr = int(np.log2(c*r))
+                r = int(np.log2(m/0.05))
+                sketchSize = c*r
+                # if sketchSize > m: continue
+                cr = int(np.log2(sketchSize))
                 rList=[r]
             for r in rList:
                 normCs = get_sketched_norm(normType, stream,w, m, int(c),int(r),device, \
-                                                isNearest=True, toNumpy=True)
-                errCs = abs(normEx - normCs)/normCs
+                                                isNearest=False, toNumpy=True)
+                errCs = abs(normEx - normCs)/normEx
                 if CSLOOP:
                     cr = int(np.log2(c*r))
                     output = [n,m,w,c,r, cr, normEx,normCs, errCs]

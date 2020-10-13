@@ -54,11 +54,7 @@ class CSNorm(object):
                                                 minlength=self.c)
         self.get_norm() 
 
-    def get_norm(self, clamp=False):
-        # if clamp:
-        #     table = torch.clamp(self.table, 0, None)
-        # else:
-        #     table = self.table
+    def get_norm(self):
         norms = self.norm_fn(self.table)
         # print(norms)
         assert(len(norms)==self.r)

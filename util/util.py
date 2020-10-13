@@ -40,7 +40,7 @@ def get_analyze_pd(outputs, outName, colName):
 def get_name(isRand, normType, ftr=None,isClosest=None, add=''):
     name = normType + '_'
     if isRand:
-        name =name + 'rand_'
+        name =name + 'rd_'
     elif ftr is not None:
         name = name + ftr + '_'
     if isClosest:
