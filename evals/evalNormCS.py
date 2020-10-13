@@ -3,6 +3,7 @@ import torch
 from tqdm import tqdm
 from util.norm import norm_function
 from evals.csnorm import CSNorm
+from evals.sketchsUpdate import kept_sketchs_id
 
 
 # def create_hashes(r):
@@ -40,32 +41,23 @@ def update_sketchs(id, norm_fn, csvs, item, c,r,device):
     # print(normsLeft)
     return csvsLeft, normsLeft 
 
-def kept_sketchs_id(norms):
-    l= len(norms)
-    if l <3: return list(range(l))
-    result = set([])
-    i = 0
-    while i < l:
-        result.add(i)
-        found = False
-        j = i+1
-        while j < l:
-            if norms[j] > norms[i]:
-                i = j -1
-                found = True
-                break
-            if (norms[j] < (norms[i] / 2.0)):
-                if j != i+1:
-                    result.add(j-1)                    
-                i = j - 1
-                found = True
-                break
-            j+=1
-        if not found and i != l-1: 
-            result.add(l-1)
-            return result
-        i+=1
-    return result
+# def kept_sketchs_id(norms):
+#     l= len(norms)
+#     keep = []
+#     i = 0
+#     while i < l:
+#         keep.append(i)
+#         if i == l-2: return keep +[i+1]
+#         found = False
+#         j = i+1
+#         while j < l:
+#             if (abs(norms[j]-norms[i]) >= (norms[i] / 2.0)):
+#                 i = j if j-1 == i else j-1                
+#                 found = True
+#                 break
+#             j+=1
+#         if not found: return keep + [l-1]
+#     return keep
 
 def get_windowed_id(csvs, w, size =2):
     ids = np.array([])
