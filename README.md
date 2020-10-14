@@ -1,7 +1,7 @@
 # SymNormSlidingWindows
 Vladimir Braverman, Samson Zhou
 ## Run from terminal
-    $ ./main.sh 
+    $ ./scripts/main.sh 
 
 # Use with SLURM
 

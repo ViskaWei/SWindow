@@ -9,15 +9,14 @@ from dataset.dataloader import load_traffic_stream, get_stream_range
 from evals.evalNorm import get_estimated_norm
 from evals.evalNormCS import get_sketched_norm
 
-def get_stream(NAME, ftr=None, n=None,m=None,pckPath = None, isLoad = True, isRand = False, isTest=False):
-    if isRand:
-        stream = create_random_stream(n,m)
+def get_stream(NAME, ftr=None, n=None,m=None,HH=True, pckPath = None, isLoad = True, isTest=False):
+    m = int(m)
+    if ftr =='rd':
+        stream = create_random_stream(n,m, HH=HH, HH3=None)
     else:
         stream = load_traffic_stream(ftr, isTest, isLoad, m, pckPath)
     n = get_stream_range(stream, n=n, ftr=ftr)
-    m = len(stream)
-    # print(m, n)
-    return stream, m, n
+    return stream, n
 
 # def get_norms(normType, stream, w, m, n, sRate, c,r=None, device=None, isNearest=True):
 #     device='cuda'
@@ -30,22 +29,41 @@ def get_stream(NAME, ftr=None, n=None,m=None,pckPath = None, isLoad = True, isRa
 #     logging.info(output)
 #     return output
 
-def get_analyze_pd(outputs, outName, colName):
+def get_analyze_pd(outputs, outName, colName, outDir='./out/'):
     resultPd = pd.DataFrame(data = outputs, columns = colName)
     print(resultPd)
-    resultPd.to_csv(f'./out/{outName}.csv', index = False)
+    resultPd.to_csv(f'{outDir}{outName}.csv', index = False)
     return None
 
 
-def get_name(isRand, normType, ftr=None,isClosest=None, add=''):
+def get_name(normType, ftr, isClosest=None, add='',logdir='./log/'):
     name = normType + '_'
-    if isRand:
-        name =name + 'rd_'
-    elif ftr is not None:
+    if ftr is not None:
         name = name + ftr + '_'
     if isClosest:
         name = name + 'c_'
     now = datetime.now()
     name = name + add + now.strftime("%m%d_%H:%M")
-    logName = './log/' + name
+    logName = logdir + name
     return name, logName
+
+def get_rList(m,delta=0.05, l=3, fac =False, gap=4):
+    rr = int(np.log10(m/delta))
+    rList = [rr]
+    i = 0
+    while i <= l:
+        if fac:
+            rrNew = int(rr/2)
+        else:
+            rrNew = rr - gap
+        if rrNew >3:
+            rList.append(rrNew)
+        else:
+            break
+        rr = rrNew
+        i+=1
+    return rList
+
+def get_cList(m,r,epsilon=0.05):
+    c2 = [np.floor(np.log(m/r)), np.ceil(np.log(m/r))]
+    return [int(2**cc) for cc in c2]

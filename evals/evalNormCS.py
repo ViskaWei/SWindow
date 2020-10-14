@@ -41,23 +41,6 @@ def update_sketchs(id, norm_fn, csvs, item, c,r,device):
     # print(normsLeft)
     return csvsLeft, normsLeft 
 
-# def kept_sketchs_id(norms):
-#     l= len(norms)
-#     keep = []
-#     i = 0
-#     while i < l:
-#         keep.append(i)
-#         if i == l-2: return keep +[i+1]
-#         found = False
-#         j = i+1
-#         while j < l:
-#             if (abs(norms[j]-norms[i]) >= (norms[i] / 2.0)):
-#                 i = j if j-1 == i else j-1                
-#                 found = True
-#                 break
-#             j+=1
-#         if not found: return keep + [l-1]
-#     return keep
 
 def get_windowed_id(csvs, w, size =2):
     ids = np.array([])
@@ -69,14 +52,23 @@ def get_windowed_id(csvs, w, size =2):
     # print('ids',ids,'closet', closeIds)
     return closeIds 
 
+def get_averaged_sketched_norm(aveNum, normType, stream, w, m, c, r, device, isNearest = True, toNumpy=True):
+    normCsAvg = np.array([])
+    for j in tqdm(range(aveNum)):
+        normCs = get_sketched_norm(normType, stream,w, m, int(c),int(r),device, \
+                                                isNearest=True, toNumpy=True)
+        normCsAvg = np.append(normCsAvg, normCs)
+    normCs = normCsAvg.mean().round(3)
+    normCsStd = normCsAvg.std().round(3)
+    return normCs, normCsStd
 
 def get_sketched_norm(normType, stream, w, m, c, r, device, isNearest = True, toNumpy=True):
     csvs = []
     streamTr=torch.tensor(stream[:m], dtype=torch.int64)
     assert len(streamTr) == m
     norm_fn = norm_function(normType, isTorch=True)
-    # for i in range(m):
-    for i in tqdm(range(m)):
+    for i in range(m):
+    # for i in tqdm(range(m)):
         csvs, norms = update_sketchs(i,norm_fn, csvs, streamTr[i], c,r,device)
     closeIds = get_windowed_id(csvs, w)
     # print(norms)

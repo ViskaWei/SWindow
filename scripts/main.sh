@@ -1,3 +1,3 @@
 #!/bin/bash
 
-exec python -m main $@
+./scripts/run.sh "-m main" $@

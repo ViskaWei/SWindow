@@ -11,9 +11,10 @@ def norm_function(name, isTorch=False):
         except: 
             raise 'enter # for p in Lp'
         if isTorch:
-            return lambda x: torch.norm(x, p=p, dim=1, keepdim=False, out=None)
+            return lambda x: torch.sum(abs(x)**p, dim=1)**(1.0/p)
+            # return lambda x: torch.norm(x, p=p, dim=1, keepdim=False, out=None)
         else:
-            return lambda x: sum([abs(i)**p for i in x])**(1.0/p)
+            return lambda x: np.power(sum([np.power(abs(i), p) for i in x]), (1.0/p))
     elif name[0] == 'T':
         try: 
             k = int(name[1:])

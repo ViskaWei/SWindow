@@ -32,6 +32,8 @@ def get_stream_range(stream, n=None, ftr=None):
         return n
     if ftr is None:
         return n if n is not None else max(stream)
+    elif ftr =='rd':
+        return 10000
     elif ftr[-4:] == 'port':
         return 2**16
     elif (ftr =='src' or ftr == 'dst'):
@@ -40,16 +42,3 @@ def get_stream_range(stream, n=None, ftr=None):
         return 1500
     else:
         return max(stream)
-
-        # else:
-        # if isRand:
-        #     stream = create_random_stream(n,m)
-        # else:
-        #     if isTest: 
-        #         m = 10
-        #         # path ='/home/swei20/SymNormSlidingWindows/data/testdata/test100.pcap'
-        #         logging.info('test on 10 packets') 
-        #     elif m is None:
-        #         m = -1               
-        #     stream, m = get_packet_stream(path, ftr, m=m)
-        # np.savetxt(f'./data/stream/{streamPath}.txt', stream)

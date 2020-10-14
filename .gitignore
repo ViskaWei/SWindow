@@ -5,3 +5,8 @@ regression
 data
 out
 log
+log2
+out2
+*.log
+*.csv
+*.out

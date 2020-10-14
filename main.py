@@ -4,99 +4,91 @@ import pandas as pd
 from tqdm import tqdm
 import logging
 import cProfile
-from util.util import get_name, get_stream, get_analyze_pd 
+from util.util import get_name, get_stream, get_analyze_pd, get_rList,get_cList
 from dataset.traffic import test_sniff
 from evals.evalNorm import get_estimated_norm
-from evals.evalNormCS import get_sketched_norm
+from evals.evalNormCS import get_averaged_sketched_norm
 DATADIR ='/home/swei20/SymNormSlidingWindows/data' 
 PCKSET ='/home/swei20/SymNormSlidingWindows/test/data/packets/equinix-nyc.dirA.20190117-131558.UTC.anon.pcap'
 TESTSET = '/home/swei20/SymNormSlidingWindows/test/data/packets/test100.pcap'
 STREAMPATH = 'traffic'
 # path = os.path.join(DATADIR, DATASET)
 device = 'cuda'
+# outIdx = '_sport2'
+outIdx = '_src'
+
+# outIdx = '_rd_wRate01'
+
+try: 
+    os.mkdir(f'./out{outIdx}/')
+    os.mkdir(f'./log{outIdx}/')
+except:
+    pass
 
 def main():
-    LOAD, RAND = 1,1
-    TEST = 0
+    LOAD, TEST = 1,0
     CSLOOP = (not TEST) and 1
     MLOOP = (not CSLOOP)
+    colName = ['errCs','n','m','w','c','r', 'cr', 'ex', 'cs','std','un','errUn']
     if TEST:
         mList ,cList, rList= [100], [10],[2]
         suffix = 'test'
         path = TESTSET
         MLOOP = 1
         cr = np.log2(cList[0]*rList[0])
-        colName = ['n','m','w','sRate','c','r', 'cr', 'ex', 'un','cs','errCs','errUn']
     else:
         path = PCKSET
         if CSLOOP:
-            mList=[10000]
-            # cList = [2**8]
-            sketchK = int(np.log2(0.01 * mList[0])) 
-            # cList = [2**8, 2**9, 2**10]
-            cList = [2**3, 2**4, 2**6, 2**7, 2**8, 2**9, 2**10, 2**11, 2**13]
-            rList = None
-            # rList = [4,8,12,16,20]
+            mList=[2**13]
+            cList = [2**(int(4) + mm) for mm in range(6)]  
+            rList=[4]
+            # rList = get_rList(mList[0],delta=0.05, l=2, fac=False,gap=4)
+            print(rList)
             suffix = f'csL_m{mList[-1]}_'
-            colName = ['n','m','w','c','r','cr', 'ex','cs','errCs']
+            # colName = ['errCs','n','m','w','c','r','cr', 'ex','cs','std']
         elif MLOOP:
-            mList = [10000]
-            # mList = [100, 500, 1000, 5000, 10000, 50000]
-            # mList = [5000, 10000, 50000, 100000, 500000]        
-            cList =[2**8]
-            # rList = [2**3]
-            rList = None
-            if rList is None:
-                suffix = f'mL_c{cList[0]}_'
-            else:
-                cr = np.log2(cList[0]*rList[0])
-                suffix = f'mL_t{cr}_'
-            colName = ['n','m','w','sRate','c','r', 'cr', 'ex', 'un','cs','errCs','errUn']
+            # mList = [2**7,2**8]  
+            mList = [2**(int(9) + mm) for mm in range(5)]  
+            cList, rList = None, None
+            rList =[2**2]
+            suffix = 'mL_'
+            if cList is not None:
+                suffix = suffix + f'c{cList[0]}_'
+                if rList is not None: suffix = suffix + f'r{rList[0]}_'
         else:
             pass
-    if RAND: 
-        n = 100
-        mList = [1000]
-    else:
-        n = None
-    wRate, w, sRate = 1, 50000, 0.1    
-    normK = [3, int(cList[0]/4.0)][0]
-    normType=['L2',f'T{normK}'][1]
-    ftr = ['sport', 'src'][0]
-    NAME, logName = get_name(RAND, normType, ftr=ftr, add=suffix)
+    wRate, wmin, sRate, aveNum = 0.1, mList[-1], 0.1, 5 
+    normK = [3, 8, 16][2]
+    normType=['L2',f'T{normK}'][0]
+    ftr = ['rd', 'sport', 'src'][2]
+    NAME, logName = get_name(normType, ftr, add=suffix,logdir=f'./log{outIdx}/')
     logging.basicConfig(filename = f'{logName}.log', level=logging.INFO)
-
+    n=2**6 if ftr == 'rd' else None
+    stream, n = get_stream(NAME, ftr=ftr, n=n,m=mList[-1],HH = [1,2,3], pckPath = path, isLoad = LOAD, isTest=TEST)
+    logging.info(f'{normType}-norm of {ftr} Stream {mList[-1]} with dict {n}. ave{aveNum}')
     results = []
-    stream, m,n = get_stream(NAME, ftr=ftr, n=n,m=mList[-1],pckPath = path,\
-                 isLoad = LOAD, isRand = RAND, isTest=TEST)
-    print(stream)
-    logging.info('Stream Prepared. Estimating Norms...')
-    for m in tqdm(mList):    
+    for m in tqdm(mList):
+        m = int(m)    
         stream0 = stream[:m]
-        w = min(int(m*wRate), 1000)
+        # print(stream)
+        w = min(int(m*wRate), wmin+1)
+        if rList is None: rList = get_rList(m,delta=0.05, l=2, fac=False,gap=4)
+        if cList is None: cList = get_cList(m,rList[0])
         normEx, normUn,errUn = get_estimated_norm(normType, stream0, n, w, sRate=sRate,getUniform=MLOOP)
-        
-        for c in tqdm(cList):
-            if c > m: continue
-            if rList is None: 
-                r = int(np.log2(m/0.05))
-                sketchSize = c*r
-                # if sketchSize > m: continue
-                cr = int(np.log2(sketchSize))
-                rList=[r]
-            for r in rList:
-                normCs = get_sketched_norm(normType, stream0,w, m, int(c),int(r),device, \
-                                                isNearest=True, toNumpy=True)
-                errCs = abs(normEx - normCs)/normEx
-                if CSLOOP:
-                    cr = int(np.log2(c*r))
-                    output = [n,m,w,c,r, cr, normEx,normCs, errCs]
-                elif MLOOP:
-                    output = [n,m,w,sRate,c,r,cr, normEx, normUn,normCs, errCs, errUn]
+        for r in tqdm(rList):
+            for c in cList:
+                if c > m: continue
+                csSize = c*r
+                if csSize > 2*w: continue
+                cr = np.log2(csSize).round(2)
+                normCs, normCsStd = get_averaged_sketched_norm(aveNum, normType, stream0,\
+                                         w, m, c, r, device, isNearest = True, toNumpy=True)
+                errCs = np.round(abs(normEx - normCs)/normEx,2)
+                output = [errCs, n,m,w,c,r,cr, normEx,normCs,normCsStd, normUn, errUn]
                 logging.info(output)
                 results.append(output)
 
-    get_analyze_pd(results, NAME, colName)
+    get_analyze_pd(results, NAME, colName, outDir=f'./out{outIdx}/')
 
 
 
