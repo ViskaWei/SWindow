@@ -56,8 +56,11 @@ def main():
             cList = [128]
             suffix = 'mL_'
             if cList is not None:
-                suffix = suffix + f'c{cList[0]}_'
-                if rList is not None: suffix = suffix + f'r{rList[0]}_'
+                if rList is not None:
+                    cr = int(np.log2(cList[0]*rList[0]))
+                    suffix = suffix + f'cr{cr}_'
+                else:
+                    suffix = suffix + f'c{rList[0]}_'
         else:
             pass
     wRate, wmin, sRate, aveNum = 0.9, mList[-1], 0.1, 30
