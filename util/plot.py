@@ -38,7 +38,7 @@ def get_pd(DATADIR, filename, FILE2=None, errbar=False, save=True,crVal=7):
         plot_error(ftr, out, normType, errbar,crVal=crVal)  
     elif loop == 'csL':
         plot_size_error(out, ftr, normType)
-    if save: plt.savefig(f'/home/swei20/SymNormSlidingWindows/imgs/{ftr}_{normType}_m.png',bbox_inches = 'tight')
+    if save: plt.savefig(f'/home/swei20/SymNormSlidingWindows/imgs/{ftr}_{normType}_{loop}.png',bbox_inches = 'tight')
     return out,ftr,normType
 
 def plot_topk_norms(ftr, outs, normTypes, crVal=7):

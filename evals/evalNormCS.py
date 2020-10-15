@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 from tqdm import tqdm
+from time import time
 from util.norm import norm_function
 from evals.csnorm import CSNorm
 from evals.sketchsUpdate import kept_sketchs_id
@@ -69,7 +70,9 @@ def get_sketched_norm(normType, stream, w, m, c, r, device, isNearest = True, to
     norm_fn = norm_function(normType, isTorch=True)
     for i in range(m):
     # for i in tqdm(range(m)):
+        t0 = time()
         csvs, norms = update_sketchs(i,norm_fn, csvs, streamTr[i], c,r,device)
+        # print(time()-t0, len(csvs), norms)
     closeIds = get_windowed_id(csvs, w)
     # print(norms)
     if isNearest:

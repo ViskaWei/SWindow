@@ -34,7 +34,7 @@ def get_freqList(stream, n=None, m=None):
 def get_exact_norm(norm_fn, stream, n, w):
     freqList = get_freqList(stream[-w:], n=n)
     normEx = norm_fn(freqList) 
-    logging.info('normEx in w{}: {:0.2f}'.format(w,normEx))
+    logging.info('normEx in w {}: {}'.format(w,normEx))
     return normEx
 
 def get_uniform_sampled_norm(norm_fn, stream, n, w, sRate=0.1):
@@ -44,5 +44,5 @@ def get_uniform_sampled_norm(norm_fn, stream, n, w, sRate=0.1):
     samplesNorm = norm_fn(freqList)
     # samplesNorm = np.linalg.norm(freqList, ord=2)
     uniformNorm = np.sqrt(samplesNorm**2 / sRate)
-    logging.info('{:0.2f}-sampled uniform Norm in window {:0.2f}'.format(sRate, uniformNorm))
+    logging.info('{:0.2f}-normUn in w {}: {}'.format(sRate,w, uniformNorm))
     return uniformNorm

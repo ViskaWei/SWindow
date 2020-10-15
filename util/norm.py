@@ -28,3 +28,7 @@ def norm_function(name, isTorch=False):
             return topk_norm_torch
         else:
             return lambda x: sum(np.sort([abs(i) for i in x])[::-1][:k])
+
+
+# fn = norm_function('T2', isTorch=False)
+# print(fn([3,4,3,5]))

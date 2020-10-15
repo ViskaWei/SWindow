@@ -46,4 +46,4 @@ def kept_sketchs_id(norms):
 
 # norms = [100, 95,93,18, 76, 43, 21, 18, 15, 2, 1, 1]
 # # {0, 2, 3, 4, 5, 6, 8, 9, 10, 11}
-# print(kept_sketchs_id2(norms))
+# print(kept_sketchs_id(norms))
