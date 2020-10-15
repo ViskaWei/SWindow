@@ -14,8 +14,8 @@ TESTSET = '/home/swei20/SymNormSlidingWindows/test/data/packets/test100.pcap'
 STREAMPATH = 'traffic'
 # path = os.path.join(DATADIR, DATASET)
 device = 'cuda'
-# outIdx = '_sport2'
-outIdx = '_src'
+outIdx = '_sport_r16'
+# outIdx = '_src'
 
 # outIdx = '_rd_wRate01'
 
@@ -27,7 +27,7 @@ except:
 
 def main():
     LOAD, TEST = 1,0
-    CSLOOP = (not TEST) and 1
+    CSLOOP = (not TEST) and 0
     MLOOP = (not CSLOOP)
     colName = ['errCs','n','m','w','c','r', 'cr', 'ex', 'cs','std','un','errUn']
     if TEST:
@@ -39,18 +39,18 @@ def main():
     else:
         path = PCKSET
         if CSLOOP:
-            mList=[2**13]
-            cList = [2**(int(4) + mm) for mm in range(6)]  
-            rList=[4]
-            # rList = get_rList(mList[0],delta=0.05, l=2, fac=False,gap=4)
+            mList=[2**16]
+            cList = [2**(int(5) + mm) for mm in range(6)]  
+            rList=[16]
+            # rList = get_rList(mList[0],delta=0.05, l=1, fac=False,gap=4)
             print(rList)
             suffix = f'csL_m{mList[-1]}_'
             # colName = ['errCs','n','m','w','c','r','cr', 'ex','cs','std']
         elif MLOOP:
-            # mList = [2**7,2**8]  
-            mList = [2**(int(9) + mm) for mm in range(5)]  
+            mList = [2**(int(10) + mm) for mm in range(6)]  
             cList, rList = None, None
-            rList =[2**2]
+            rList =[16]
+            cList = [1024]
             suffix = 'mL_'
             if cList is not None:
                 suffix = suffix + f'c{cList[0]}_'
@@ -58,9 +58,9 @@ def main():
         else:
             pass
     wRate, wmin, sRate, aveNum = 0.1, mList[-1], 0.1, 5 
-    normK = [3, 8, 16][2]
-    normType=['L2',f'T{normK}'][0]
-    ftr = ['rd', 'sport', 'src'][2]
+    normK = [3, 8, 16][1]
+    normType=['L2',f'T{normK}'][1]
+    ftr = ['rd', 'sport', 'src'][1]
     NAME, logName = get_name(normType, ftr, add=suffix,logdir=f'./log{outIdx}/')
     logging.basicConfig(filename = f'{logName}.log', level=logging.INFO)
     n=2**6 if ftr == 'rd' else None
@@ -79,8 +79,8 @@ def main():
             for c in cList:
                 if c > m: continue
                 csSize = c*r
-                if csSize > 2*w: continue
-                cr = np.log2(csSize).round(2)
+                # if csSize > 2*w: continue
+                cr = int(np.log2(csSize))
                 normCs, normCsStd = get_averaged_sketched_norm(aveNum, normType, stream0,\
                                          w, m, c, r, device, isNearest = True, toNumpy=True)
                 errCs = np.round(abs(normEx - normCs)/normEx,2)
