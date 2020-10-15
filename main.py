@@ -19,13 +19,16 @@ outIdx = '_src_final'
 
 # outIdx = '_rd_r12'
 
-try: 
-    os.mkdir(f'./out{outIdx}/')
-    os.mkdir(f'./log{outIdx}/')
-except:
-    pass
+
 
 def main():
+    outIdx = '_src_final'
+
+    try: 
+        os.mkdir(f'./out{outIdx}/')
+        os.mkdir(f'./log{outIdx}/')
+    except:
+        pass
     LOAD, TEST = 1,0
     CSLOOP = (not TEST) and 1
     MLOOP = (not CSLOOP)
