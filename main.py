@@ -14,10 +14,10 @@ TESTSET = '/home/swei20/SymNormSlidingWindows/test/data/packets/test100.pcap'
 STREAMPATH = 'traffic'
 # path = os.path.join(DATADIR, DATASET)
 device = 'cuda'
-outIdx = '_sport_r16'
+# outIdx = '_sport_r16'
 # outIdx = '_src'
 
-# outIdx = '_rd_wRate01'
+# outIdx = '_rd_r16'
 
 try: 
     os.mkdir(f'./out{outIdx}/')
@@ -60,7 +60,7 @@ def main():
     wRate, wmin, sRate, aveNum = 0.1, mList[-1], 0.1, 5 
     normK = [3, 8, 16][1]
     normType=['L2',f'T{normK}'][1]
-    ftr = ['rd', 'sport', 'src'][1]
+    ftr = ['rd', 'sport', 'src'][0]
     NAME, logName = get_name(normType, ftr, add=suffix,logdir=f'./log{outIdx}/')
     logging.basicConfig(filename = f'{logName}.log', level=logging.INFO)
     n=2**6 if ftr == 'rd' else None
@@ -75,7 +75,8 @@ def main():
         if rList is None: rList = get_rList(m,delta=0.05, l=2, fac=False,gap=4)
         if cList is None: cList = get_cList(m,rList[0])
         normEx, normUn,errUn = get_estimated_norm(normType, stream0, n, w, sRate=sRate,getUniform=MLOOP)
-        for r in tqdm(rList):
+        for r in rList:
+        # for r in tqdm(rList):
             for c in cList:
                 if c > m: continue
                 csSize = c*r
@@ -83,7 +84,7 @@ def main():
                 cr = int(np.log2(csSize))
                 normCs, normCsStd = get_averaged_sketched_norm(aveNum, normType, stream0,\
                                          w, m, c, r, device, isNearest = True, toNumpy=True)
-                errCs = np.round(abs(normEx - normCs)/normEx,2)
+                errCs = np.round(abs(normEx - normCs)/normEx,3)
                 output = [errCs, n,m,w,c,r,cr, normEx,normCs,normCsStd, normUn, errUn]
                 logging.info(output)
                 results.append(output)
