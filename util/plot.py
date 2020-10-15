@@ -32,13 +32,13 @@ def get_pd(DATADIR, filename, FILE2=None, errbar=False, save=True,crVal=7):
         outs = [out,out2]
         normTypes = [normType, normType2]
         plot_topk_norms(ftr, outs, normTypes, crVal=crVal)
-        if save: plt.savefig(f'/home/swei20/SymNormSlidingWindows/imgs/{ftr}_{normType}{normType2}.png')
+        if save: plt.savefig(f'/home/swei20/SymNormSlidingWindows/imgs/{ftr}_{normType}{normType2}.png',bbox_inches = 'tight')
         return outs
     if loop=='mL':
         plot_error(ftr, out, normType, errbar,crVal=crVal)  
     elif loop == 'csL':
         plot_size_error(out, ftr, normType)
-    if save: plt.savefig(f'/home/swei20/SymNormSlidingWindows/imgs/{ftr}_{normType}_m.png')
+    if save: plt.savefig(f'/home/swei20/SymNormSlidingWindows/imgs/{ftr}_{normType}_m.png',bbox_inches = 'tight')
     return out,ftr,normType
 
 def plot_topk_norms(ftr, outs, normTypes, crVal=7):
