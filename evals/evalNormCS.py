@@ -15,20 +15,21 @@ def create_csv(id, norm_fn, c,r, device):
 def update_norm(csv, item):
     csv.accumulateVec(item)
     csv.get_norm()
-    # print(item, csv.id,csv.norm.data,csv.table)
+    # print('item{} | id{} | norm {} | table{}'.format(item, csv.id, csv.norm, csv.table))
 
 def update_norms(csvs, c,r, device, item):
     norms = torch.tensor([], device = device)
     for csv in csvs:
         update_norm(csv, item)    
-        norms = torch.cat((norms, csv.norm.view(1)), 0)        
+        norms = torch.cat((norms, csv.norm.view(1)), 0)   
+        # print('norms', norms)     
     return norms
 
 def update_sketchs(id, norm_fn, csvs, item, c,r,device):
     csv0 = create_csv(id, norm_fn, c,r,device)
     csvs.append(csv0)
     norms = update_norms(csvs, c,r, device, item)
-    logging.debug(f'id:{csv0.id} |norm: {csv0.norm}| item {item}| #csvs: {len(csvs)}')
+    # print(f'===============csvs: {len(csvs)}============================')
     idxs = kept_sketchs_id(norms)
     csvsLeft = [csvs[i] for i in idxs]
     del csvs

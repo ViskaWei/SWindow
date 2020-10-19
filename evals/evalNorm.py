@@ -9,7 +9,7 @@ def get_estimated_norm(normType, stream, n, w, sRate=None, isUniSampled=True, ke
     if keptDig is not None: normEx = np.round(normEx,keptDig+1)
     if isUniSampled:
         normUn =get_uniform_sampled_norm(norm_fn, stream, n, w, sRate=sRate)
-        errUn = abs(normEx-normUn)/normUn
+        errUn = abs(normEx-normUn)/normEx
         if keptDig is not None: 
             normUn = np.round(normUn,keptDig)
             errUn =  np.round(errUn,keptDig)
@@ -27,6 +27,7 @@ def get_freqList(stream, n=None, m=None):
         assert len(freqList) == n
     else:
         freqList = list(c.values())
+    # print(c.most_common(8))
     # logging.info('Freqlist{}'.format(freqList))
     return freqList
 

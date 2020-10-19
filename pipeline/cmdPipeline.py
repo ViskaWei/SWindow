@@ -40,7 +40,7 @@ class CmdPipeline():
         if self.args is None:
             self.args = self.parser.parse_args().__dict__
             self.get_configs(self.args)
-        print(self.args)
+        # print(self.args)
     
     def is_arg(self, name, args =None):
         args = args or self.args
@@ -91,7 +91,7 @@ class CmdPipeline():
         return args
 
     def load_args_json(self, filename):
-        print(filename)
+        # print(filename)
         with open(filename, 'r') as f:
             args = json.load(f)
         return args

@@ -22,8 +22,8 @@ class CSNorm(object):
         self.id = id
         self.norm = None
         # torch.random.manual_seed(42)
-        rand_state = torch.random.get_rng_state()
-        torch.random.set_rng_state(rand_state)
+        # rand_state = torch.random.get_rng_state()
+        # torch.random.set_rng_state(rand_state)
         self.hashes = torch.randint(0, LARGEPRIME, (self.r, 6),
                                dtype=torch.int64, device="cpu")
         self.h1 = self.hashes[:,0:1]

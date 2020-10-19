@@ -3,10 +3,10 @@
         "./configs/cmdConfigs.json"
     ],
     "loop": "mL",
-    "mList": [10, 3, 8],
-    "cList": [2, 3, 8],
-    "rList": [2, 3, 8],
-    "ftr": "rd",
-    "norm":"L",
-    "normDim":2
+    "mList": [2, 0, 6],
+    "cList": [2, 5, 1],
+    "rList": [2, 3, 1],
+    "normDim":2,
+    "wRate": 0.9,
+    "load": true
 }

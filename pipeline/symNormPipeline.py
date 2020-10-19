@@ -55,7 +55,7 @@ class SymNormPipeline(CmdPipeline):
         parser.add_argument('--norm', type=str, choices=['L','T'], help='Lp-norm or Topk-norm\n')
         parser.add_argument('--normDim', type=int, help='norm dimension\n')
 
-        parser.add_argument('--ftr', type=int, choices=['rd','src'], help='rd or src \n')
+        parser.add_argument('--ftr', type=str, choices=['rd','src'], help='rd or src \n')
 
 ################################################# PREPARE ##############################################
     def prepare(self):
@@ -104,13 +104,14 @@ class SymNormPipeline(CmdPipeline):
     def run(self):
         super().run()
         stream = self.run_step_stream()
+        # stream = list(range(self.mList[-1]))
         results = self.run_step_loop(stream)
         self.run_step_analyze(results)
-
 
     def run_step_stream(self):
         stream, self.n =get_stream(ftr=self.ftr, n=self.n,m=self.mList[-1],HH=True,\
              pckPath = None, isLoad = self.isLoad, isTest=self.isTest)
+        # print(stream)
         logging.info(f'{self.normType}-norm of {self.ftr} Stream {self.mList[-1]} with dict {self.n}.')
         return stream
 

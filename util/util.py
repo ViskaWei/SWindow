@@ -30,13 +30,11 @@ def get_norms(mList, rList, cList, normType, stream, n, wRate=0.9,sRate=0.1, dev
         if rList is None: rList = get_rList(m,delta=0.05, l=2, fac=False,gap=4)
         if cList is None: cList = get_cList(m,rList[0])
         normEx, normUn,errUn = get_estimated_norm(normType, stream0, n, w, sRate=sRate,isUniSampled=isUniSampled)
+        # print(normEx, normUn, errUn)
         for r in rList:
         # for r in tqdm(rList):
             for c in cList:
-                # if c > m: continue
-                csSize = c*r
-                # if csSize > 2*w: continue
-                cr = int(np.log2(csSize))
+                cr = int(np.log2(c*r))
                 normCsStd = 0
                 normCs = get_sketched_norm(normType, stream, w, m, int(c),int(r),device, \
                                                 isNearest=isNearest, toNumpy=True)
