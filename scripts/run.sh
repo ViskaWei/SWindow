@@ -2,6 +2,7 @@
 
 # Work around issues with saving weights when running on multiple threads
 # export HDF5_USE_FILE_LOCKING=FALSE
+source /datascope/slurm/miniconda3/bin/activate ptorch
 
 PARAMS=""
 COMMAND="$1"
@@ -24,7 +25,7 @@ fi
 PYTHON_DEBUG=0
 SBATCH_PARTITION='elephant'
 SBATCH_MEM=32G
-SBATCH_TIME="24:00:00"
+SBATCH_TIME="48:00:00"
 SBATCH_GPUS=0
 SBATCH_CPUS_PER_TASK=32
 

@@ -2,13 +2,14 @@ import os
 import numpy as np
 import pandas as pd
 import logging
+import tqdm
 from datetime import datetime
 from dataset.randomstream import create_random_stream
 # from dataset.traffic import get_packet_stream
 from dataset.dataloader import load_traffic_stream, get_stream_range
 from evals.evalNorm import get_estimated_norm
 from evals.evalNormCS import get_sketched_norm
-
+from util.util import get_rList, get_cList
 def get_stream(NAME, ftr=None, n=None,m=None,HH=True, pckPath = None, isLoad = True, isTest=False):
     m = int(m)
     if ftr =='rd':
@@ -18,16 +19,33 @@ def get_stream(NAME, ftr=None, n=None,m=None,HH=True, pckPath = None, isLoad = T
     n = get_stream_range(stream, n=n, ftr=ftr)
     return stream, n
 
-# def get_norms(normType, stream, w, m, n, sRate, c,r=None, device=None, isNearest=True):
-#     device='cuda'
-#     logging.info('ex {:0.2f}, un {:0.2f}, cs {:0.2f}'.format(exactNorm, uniformNorm,sketchNorm))
-#     logging.info('n{}|m{}|w{}|sRate{}|table_c{}r{}'.format(n,m,w,sRate,c,r))   
-#     errCs = abs(exactNorm-sketchNorm)/sketchNorm
-#     errUn = abs(exactNorm-uniformNorm)/uniformNorm 
-#     cr = np.log2(c*r)
-#     output = [n,m,w,sRate,c,r, cr, exactNorm, uniformNorm,sketchNorm, errCs, errUn]
-#     logging.info(output)
-#     return output
+def get_norms(mList, rList, cList, normType, stream, w, m, n, wRate=0.9,sRate=0.1, device=None, isNearest=True, MLOOP=False):
+    results = []
+    for m in tqdm(mList):
+        m = int(m)    
+        stream0 = stream[:m]
+        w = int(m*wRate)
+        logging.debug(f'stream:{stream0}|w:{w}')
+        # w = min(int(m*wRate), wmin+1)
+        if rList is None: rList = get_rList(m,delta=0.05, l=2, fac=False,gap=4)
+        if cList is None: cList = get_cList(m,rList[0])
+        normEx, normUn,errUn = get_estimated_norm(normType, stream0, n, w, sRate=sRate,getUniform=MLOOP)
+        for r in rList:
+        # for r in tqdm(rList):
+            for c in cList:
+                # if c > m: continue
+                csSize = c*r
+                # if csSize > 2*w: continue
+                cr = int(np.log2(csSize))
+                normCsStd = 0
+                normCs = get_sketched_norm(normType, stream, w, m, int(c),int(r),device, \
+                                                isNearest=isNearest, toNumpy=True)
+                errCs = np.round(abs(normEx - normCs)/normEx,3)
+                output = [errCs, n,m,w,c,r,cr, normEx,normCs,normCsStd, normUn, errUn]
+                logging.info(output)
+                results.append(output)
+    return results
+
 
 def get_analyze_pd(outputs, outName, colName, outDir='./out/'):
     resultPd = pd.DataFrame(data = outputs, columns = colName)

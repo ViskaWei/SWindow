@@ -30,5 +30,5 @@ def norm_function(name, isTorch=False):
             return lambda x: sum(np.sort([abs(i) for i in x])[::-1][:k])
 
 
-# fn = norm_function('T2', isTorch=False)
-# print(fn([3,4,3,5]))
+# fn = norm_function('L2', isTorch=True)
+# print(fn(torch.tensor([[3,0,0,4],[0,0,-5,12]])))

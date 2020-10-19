@@ -1,0 +1,8 @@
+{
+    "seed": 922,
+    "name": "test",
+    "in": "./data/stream",
+    "out": "./out/t1"
+}
+
+
