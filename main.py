@@ -16,6 +16,7 @@ def main():
 
     p=SymNormPipeline()
     p.prepare()
+    print(p.normType)
     p.run()
     print('final',p.args)
 

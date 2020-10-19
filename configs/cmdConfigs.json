@@ -1,8 +1,9 @@
 {
     "seed": 922,
-    "name": "test",
+    "name": "",
     "in": "./data/stream",
-    "out": "./out/t1"
+    "out": "t1",
+    "device":"cpu"
 }
 
 

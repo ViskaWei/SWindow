@@ -1,0 +1,12 @@
+{
+    "config": [
+        "./configs/cmdConfigs.json"
+    ],
+    "loop": "mL",
+    "mList": [10, 3, 8],
+    "cList": [2, 3, 8],
+    "rList": [2, 3, 8],
+    "ftr": "rd",
+    "norm":"L",
+    "normDim":2
+}

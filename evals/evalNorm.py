@@ -3,16 +3,16 @@ import logging
 from collections import Counter
 from util.norm import norm_function
 
-def get_estimated_norm(normType, stream, n, w, sRate=None, getUniform=True, round =True):
+def get_estimated_norm(normType, stream, n, w, sRate=None, isUniSampled=True, keptDig =2):
     norm_fn = norm_function(normType)
     normEx = get_exact_norm(norm_fn, stream,n, w)
-    if round: normEx = np.round(normEx,3)
-    if getUniform:
+    if keptDig is not None: normEx = np.round(normEx,keptDig+1)
+    if isUniSampled:
         normUn =get_uniform_sampled_norm(norm_fn, stream, n, w, sRate=sRate)
-        errUn = np.round(abs(normEx-normUn)/normUn,3)
-        if round: 
-            normUn = np.round(normUn,2)
-            errUn =  np.round(errUn,2)
+        errUn = abs(normEx-normUn)/normUn
+        if keptDig is not None: 
+            normUn = np.round(normUn,keptDig)
+            errUn =  np.round(errUn,keptDig)
     else:
         normUn, errUn = 0, 0
     return normEx, normUn, errUn

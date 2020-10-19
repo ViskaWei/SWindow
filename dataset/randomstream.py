@@ -3,7 +3,7 @@ import numpy as np
 # from collections import Counter
 
 def create_random_stream(n,m, HH=True, HH3=None):
-    # np.random.seed(42)
+    np.random.seed(42)
     if HH:
         stream = []
         d = int(np.log2(m))

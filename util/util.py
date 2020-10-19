@@ -2,24 +2,24 @@ import os
 import numpy as np
 import pandas as pd
 import logging
-import tqdm
+from tqdm import tqdm
 from datetime import datetime
 from dataset.randomstream import create_random_stream
-# from dataset.traffic import get_packet_stream
 from dataset.dataloader import load_traffic_stream, get_stream_range
 from evals.evalNorm import get_estimated_norm
 from evals.evalNormCS import get_sketched_norm
-from util.util import get_rList, get_cList
-def get_stream(NAME, ftr=None, n=None,m=None,HH=True, pckPath = None, isLoad = True, isTest=False):
+
+def get_stream(ftr=None, n=None,m=None,HH=True, pckPath = None, isLoad = True, isTest=False):
     m = int(m)
     if ftr =='rd':
         stream = create_random_stream(n,m, HH=HH, HH3=None)
     else:
         stream = load_traffic_stream(ftr, isTest, isLoad, m, pckPath)
-    n = get_stream_range(stream, n=n, ftr=ftr)
+    # n = get_stream_range(stream, n=n, ftr=ftr)
+    n = n or 0
     return stream, n
 
-def get_norms(mList, rList, cList, normType, stream, w, m, n, wRate=0.9,sRate=0.1, device=None, isNearest=True, MLOOP=False):
+def get_norms(mList, rList, cList, normType, stream, n, wRate=0.9,sRate=0.1, device=None, isNearest=True, isUniSampled=False):
     results = []
     for m in tqdm(mList):
         m = int(m)    
@@ -29,7 +29,7 @@ def get_norms(mList, rList, cList, normType, stream, w, m, n, wRate=0.9,sRate=0.
         # w = min(int(m*wRate), wmin+1)
         if rList is None: rList = get_rList(m,delta=0.05, l=2, fac=False,gap=4)
         if cList is None: cList = get_cList(m,rList[0])
-        normEx, normUn,errUn = get_estimated_norm(normType, stream0, n, w, sRate=sRate,getUniform=MLOOP)
+        normEx, normUn,errUn = get_estimated_norm(normType, stream0, n, w, sRate=sRate,isUniSampled=isUniSampled)
         for r in rList:
         # for r in tqdm(rList):
             for c in cList:

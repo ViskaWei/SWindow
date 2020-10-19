@@ -3,7 +3,10 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 import logging
+from datetime import datetime
 from pipeline.cmdPipeline import CmdPipeline
+from dataset.randomstream import create_random_stream
+from util.util import get_stream, get_norms, get_analyze_pd, get_rList,get_cList
 
 # DATADIR ='/home/swei20/SymNormSlidingWindows/data' 
 # PCKSET ='/home/swei20/SymNormSlidingWindows/test/data/packets/equinix-nyc.dirA.20190117-131558.UTC.anon.pcap'
@@ -15,9 +18,8 @@ from pipeline.cmdPipeline import CmdPipeline
 # # outIdx = '_src_final'
 # outIdx = 'test'
 # # outIdx = '_rd_r12'
-# import torch
-
-# torch.random.manual_seed(42)
+import torch
+torch.random.manual_seed(42)
 
 class SymNormPipeline(CmdPipeline):
     def __init__(self, logging=True):
@@ -25,101 +27,97 @@ class SymNormPipeline(CmdPipeline):
         self.mList=None
         self.cList=None
         self.rList=None
-
-        self.dim=None
-        self.smooth=None
-        self.cutoff=None
-        self.base=None
-        self.dtype='uint64'
-        self.save={'mat': False, 'mask':False, 'stream':False, 'HHs':False, 'maskId':None}
-        self.idx=None
-        self.sketchMode='exact'
+        self.n = None
+        self.loop=None
+        self.normType = None
+        self.ftr = None
+        self.isUniSampled=None
+        self.wRate = None
+        self.pdCol = ['errCs','n','m','w','c','r', 'cr', 'ex', 'cs','std','un','errUn']
         
+        self.save={'stream':False}
+
+
     def add_args(self, parser):
         super().add_args(parser)
-        # ===========================  LOAD  ================================
+        # ===========================  LOOP  ================================
         parser.add_argument('--mList', type=int, nargs=3, default=None, help='stream length \n')
         parser.add_argument('--cList', type=int, nargs=3, default=None, help='sketch table column\n')
         parser.add_argument('--rList', type=int, nargs=3, default=None, help='sketch table row\n')
+        parser.add_argument('--wRate', type=float, default=None, help='sliding window size\n')
         
-        parser.add_argument('--test', type=bool, help='Test or original size\n')
-        parser.add_argument('--saveMat', type=bool, help='Saving mat\n')
+        # ===========================  LOOP  ================================
+        parser.add_argument('--load', action = 'store_true', help='Sniff or load packets\n')
+        parser.add_argument('--test', action = 'store_true', help='Test or original size\n')
+        parser.add_argument('--saveStream', action = 'store_true', help='Saving stream\n')
 
-        # ===========================  PREPRO  ================================
-        parser.add_argument('--cutoff', type=str, default=None, help='Bg cutoff\n')
-        parser.add_argument('--base', type=int, default=None, help='Base\n')
-        parser.add_argument('--dtype', type=str, default=None, help='dtype\n')
+        # ===========================  NORM  ================================
+        parser.add_argument('--norm', type=str, choices=['L','T'], help='Lp-norm or Topk-norm\n')
+        parser.add_argument('--normDim', type=int, help='norm dimension\n')
 
-        
+        parser.add_argument('--ftr', type=int, choices=['rd','src'], help='rd or src \n')
+
+################################################# PREPARE ##############################################
     def prepare(self):
         super().prepare()
-        # self.apply_dataset_args()
-        # self.apply_prepro_args()
         self.apply_loop_args()
+        self.apply_dataset_args()
+        self.apply_norm_args()
+        self.apply_name_args()
 
     def apply_loop_args(self):
         self.mList = self.get_loop_from_arg('mList')
         self.cList = self.get_loop_from_arg('cList')
         self.rList = self.get_loop_from_arg('rList')
+        self.wRate = self.get_arg('wRate',default =0.9)
+        self.loop = self.get_arg('loop')
+        if self.loop == 'csL':
+            m = self.mList[0]
+            self.isUniSampled = False
+            self.name = self.loop + 'm' + str(m)
+        elif self.loop == 'mL':
+            self.isUniSampled = True
+            self.cr = int(np.log2(self.cList[0]*self.rList[0]))
+            self.name = self.loop + 'cr' + str(self.cr)
+
+    def apply_norm_args(self):
+        normStr = self.get_arg('norm')
+        normInt = self.get_arg('normDim')
+        self.normType=normStr + str(normInt)
+
+    def apply_dataset_args(self):
+        self.ftr = self.get_arg('ftr')
+        if self.ftr == 'rd': self.n = int(2**6)
+        self.isTest = self.get_arg('test')
+        self.isLoad = self.get_arg('load')
 
 
+    def apply_name_args(self):
+        name = self.ftr + '_' + self.normType + '_' + self.name
+        now = datetime.now()
+        self.name = name + now.strftime("%m%d_%H:%M")
+        # self.logName = self.logdir + name
+    
 
-    # outIdx = '_test'
+################################################# RUN ##############################################
 
-    # try: 
-    #     os.mkdir(f'./out{outIdx}/')
-    #     os.mkdir(f'./log{outIdx}/')
-    # except:
-    #     # print('not creating dir')
-    #     pass
-    # LOAD, TEST = 1,0
-    # CSLOOP = (not TEST) and 1
-    # MLOOP = (not CSLOOP)
-    # colName = ['errCs','n','m','w','c','r', 'cr', 'ex', 'cs','std','un','errUn']
+    def run(self):
+        super().run()
+        stream = self.run_step_stream()
+        results = self.run_step_loop(stream)
+        self.run_step_analyze(results)
 
-    # if TEST:
-    #     mList ,cList, rList= [100], [10],[2]
-    #     suffix = 'test'
-    #     path = TESTSET
-    #     MLOOP = 1
-    #     cr = np.log2(cList[0]*rList[0])
-    # else:
-    #     path = PCKSET
-    #     if CSLOOP:
-    #         # mList=[2**13]
-    #         mList=[2**4]
-    #         cList = [2**(int(2) + mm) for mm in range(2)]  
-    #         # cList=[16]
-    #         # cList = [2**(int(5) + mm) for mm in range(6)]  
-    #         rList=[1,2]
-    #         # rList = get_rList(mList[0],delta=0.05, l=1, fac=False,gap=4)
-    #         # print(rList)
-    #         suffix = f'csL_m{mList[-1]}_'
-    #         # colName = ['errCs','n','m','w','c','r','cr', 'ex','cs','std']
-    #     elif MLOOP:
-    #         mList = [2**(int(10) + mm) for mm in range(7)]  
-    #         cList, rList = None, None
-    #         rList =[16]
-    #         cList = [1024]
-    #         suffix = f'mL_'
-    #         if cList is not None:
-    #             if rList is not None:
-    #                 cr = int(np.log2(cList[0]*rList[0]))
-    #                 suffix = suffix + f'cr{cr}_'
-    #             else:
-    #                 suffix = suffix + f'c{rList[0]}_'
-    #     else:
-    #         pass
-    # normK = [8, 16, 4][1]
-    # normType=['L2',f'T{normK}'][0]
-    # ftr = ['rd', 'src'][0]
-    # NAME, logName = get_name(normType, ftr, add=suffix,logdir=f'./log{outIdx}/')
-    # logging.root.setLevel(logging.DEBUG)
-    # logging.basicConfig(filename = f'{logName}.log', level=logging.DEBUG)
-    # n=2**5 if ftr == 'rd' else None
-    # stream, n = get_stream(NAME, ftr=ftr, n=n,m=mList[-1],HH = False, pckPath = path, isLoad = LOAD, isTest=TEST)
-    # logging.info(f'{normType}-norm of {ftr} Stream {mList[-1]} with dict {n}.')
-    # results = get_norms(mList, rList, cList, normType, stream, w, m, n,\
-    #          wRate=0.9,sRate=0.1, device=None, isNearest=True, MLOOP=MLOOP)
 
-    # get_analyze_pd(results, NAME, colName, outDir=f'./out{outIdx}/')
+    def run_step_stream(self):
+        stream, self.n =get_stream(ftr=self.ftr, n=self.n,m=self.mList[-1],HH=True,\
+             pckPath = None, isLoad = self.isLoad, isTest=self.isTest)
+        logging.info(f'{self.normType}-norm of {self.ftr} Stream {self.mList[-1]} with dict {self.n}.')
+        return stream
+
+    def run_step_loop(self,stream):
+        results = get_norms(self.mList, self.rList, self.cList, self.normType, stream,  self.n,\
+             wRate=self.wRate,sRate=0.1, device=self.device, isNearest=True, isUniSampled=self.isUniSampled)
+        return results
+
+    def run_step_analyze(self, results):
+        get_analyze_pd(results, self.name, self.pdCol, outDir=self.outDir)

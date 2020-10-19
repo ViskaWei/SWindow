@@ -12,9 +12,10 @@ class CmdPipeline():
         self.args = None
         self.inDir = None 
         self.out = None
-        self.outName='test'
+        self.outDir='test'
         self.dim=None
         self.debug=False
+        self.device=None
         ######################### Init ########################
         
     def add_args(self,parser):
@@ -23,6 +24,8 @@ class CmdPipeline():
         parser.add_argument('--in', type=str, help='input dir\n')
         parser.add_argument('--out', type=str, help='output dir\n')
         parser.add_argument('--name', type=str, help='save model name\n')
+        parser.add_argument('--device', type=str, help='device cpu or cuda\n')
+
         # parser.add_argument('--dim', type=int, default=None,  help='Latent Representation dimension\n')
         parser.add_argument('--debugLog', action ='store_true', help='debug mode\n')
         
@@ -43,10 +46,12 @@ class CmdPipeline():
         args = args or self.args
         return name in args and args[name] is not None
 
-    def get_arg(self, name, args=None):
+    def get_arg(self, name, args=None, default=None):
         args = args or self.args
         if name in args and args[name] is not None: 
             return args[name]
+        elif default is not None:
+            return default
         else:
             raise f'arg {name} not specified in command line'
     
@@ -99,34 +104,38 @@ class CmdPipeline():
         self.apply_output_args()
     
     def apply_init_args(self):
-        if self.is_arg('seed'): np.random.seed(self.args['seed'])  
+        if self.is_arg('seed'): np.random.seed(self.args['seed'])
+        self.device = self.get_arg('device', default='cpu') 
+
         
     def apply_input_args(self):
         self.inDir = self.get_arg('in') 
         # self.dim = self.get_arg('dim')
   
     def apply_output_args(self):       
-        self.out = self.get_arg('out')
-        self.create_output_dir(self.out, cont=False)
-        self.outName = self.get_arg('name')
+        out = self.get_arg('out')
+        self.outDir = './out' + '_' + out + '/'
+        self.logDir = './log' + '_' + out + '/'
+        self.create_output_dir(self.outDir)
+        self.create_output_dir(self.logDir)
+
             
     def apply_debug_args(self):
         self.debug = self.get_arg('debugLog')
         
 
     def create_output_dir(self, dir, cont=False):
-        logging.info('Output directory is {}'.format(dir))
-        if cont:
-            if os.path.exists(dir):
-                logging.info('Found output directory.')
-            else:
-                raise Exception("Output directory doesn't exist, can't continue.")
-        elif os.path.exists(dir):
-            if len(os.listdir(dir)) != 0:
-                print('Output directory not Empty, Replacing might occurs')
-        else:
-            logging.info('Creating output directory {}'.format(dir))
-            os.makedirs(dir)
+        try: 
+            os.mkdir(dir)
+            logging.info('Creating directory {}'.format(dir))
+        except:
+            logging.info('Output directory not Empty, Replacing might occurs')
+      # elif os.path.exists(dir):
+        #     if len(os.listdir(dir)) != 0:
+        #         print('Output directory not Empty, Replacing might occurs')
+        # else:
+        #     logging.info('Creating output directory {}'.format(dir))
+        #     os.makedirs(dir)
 
     def init_logging(self, outdir):
         self.setup_logging(os.path.join(outdir, type(self).__name__.lower() + '.log'))
