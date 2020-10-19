@@ -1,7 +1,6 @@
-import numpy as np
-import math
-import copy
+# import numpy as np
 import torch
+import logging
 LARGEPRIME = 2**61-1
 
 # torch.random.manual_seed(42)
@@ -52,12 +51,18 @@ class CSNorm(object):
             self.table[r,:] += torch.bincount(input=bucket,
                                                weights=sign,
                                                 minlength=self.c)
-        self.get_norm() 
-
+        # print(f'=================={self.id}=={vec}===============')
+        # logging.
+        #  print(f'{self.table}')
+    # @staticmethod
     def get_norm(self):
         norms = self.norm_fn(self.table)
+        logging.debug(f'norms: {norms}')
         # print(norms)
         assert(len(norms)==self.r)
-        self.norm = torch.mean(norms)
+        if self.r<4:
+            self.norm = torch.mean(norms)
+        else:
+            self.norm = torch.median(norms)
 
     

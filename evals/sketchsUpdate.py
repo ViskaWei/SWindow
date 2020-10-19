@@ -30,6 +30,7 @@ def kept_sketchs_id(norms):
     l= len(norms)
     keep = []
     i = 0
+    if l <= 2: return list(range(l))
     while i < l:
         keep.append(i)
         if i == l-2: return keep +[i+1]
@@ -45,5 +46,6 @@ def kept_sketchs_id(norms):
     return keep
 
 # norms = [100, 95,93,18, 76, 43, 21, 18, 15, 2, 1, 1]
+# norms = [0]
 # # {0, 2, 3, 4, 5, 6, 8, 9, 10, 11}
 # print(kept_sketchs_id(norms))
