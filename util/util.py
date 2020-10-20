@@ -7,7 +7,7 @@ from datetime import datetime
 from dataset.randomstream import create_random_stream
 from dataset.dataloader import load_traffic_stream, get_stream_range
 from evals.evalNorm import get_estimated_norm
-from evals.evalNormCS import get_sketched_norm
+from evals.evalNormCS import get_sketched_norm, get_averaged_sketched_norm
 
 def get_stream(ftr=None, n=None,m=None,HH=True, pckPath = None, isLoad = True, isTest=False):
     m = int(m)
@@ -19,12 +19,18 @@ def get_stream(ftr=None, n=None,m=None,HH=True, pckPath = None, isLoad = True, i
     n = n or 0
     return stream, n
 
-def get_norms(mList, rList, cList, normType, stream, n, wRate=0.9,sRate=0.1, device=None, isNearest=True, isUniSampled=False):
+def get_norms(mList, rList, cList, normType, stream, n, \
+                w=None, wRate=0.9,sRate=0.1, device=None, aveNum=None, \
+                isNearest=False, isRatio=True, isUniSampled=False):
     results = []
-    for m in tqdm(mList):
+    for m in mList:
+    # for m in tqdm(mList):
         m = int(m)    
         stream0 = stream[:m]
-        w = int(m*wRate)
+        if w is None:
+            w = int(m//wRate)
+            assert w== (m//wRate) 
+        assert w<=m
         logging.debug(f'stream:{stream0}|w:{w}')
         # w = min(int(m*wRate), wmin+1)
         if rList is None: rList = get_rList(m,delta=0.05, l=2, fac=False,gap=4)
@@ -35,12 +41,13 @@ def get_norms(mList, rList, cList, normType, stream, n, wRate=0.9,sRate=0.1, dev
         # for r in tqdm(rList):
             for c in cList:
                 cr = int(np.log2(c*r))
-                normCsStd = 0
-                normCs = get_sketched_norm(normType, stream, w, m, int(c),int(r),device, \
-                                                isNearest=isNearest, toNumpy=True)
+                normCs, normStd = get_averaged_sketched_norm(aveNum, normType, stream0, w, m, int(c),int(r),device, \
+                                                isNearest=isNearest, isRatio=isRatio, toNumpy=True)
                 errCs = np.round(abs(normEx - normCs)/normEx,3)
-                output = [errCs, n,m,w,c,r,cr, normEx,normCs,normCsStd, normUn, errUn]
+
+                output = [errCs,normStd, n,m,w,c,r,cr, normEx,normCs, normUn, errUn]
                 logging.info(output)
+                # print(output)
                 results.append(output)
     return results
 

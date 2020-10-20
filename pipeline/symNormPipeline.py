@@ -28,9 +28,11 @@ class SymNormPipeline(CmdPipeline):
         self.normType = None
         self.ftr = None
         self.isUniSampled=None
+        self.w=None
         self.wRate = None
-        self.pdCol = ['errCs','n','m','w','c','r', 'cr', 'ex', 'cs','un','errUn']
+        self.pdCol = ['errCs','std','n','m','w','c','r', 'cr', 'ex', 'cs','un','errUn']
         self.save={'stream':False}
+        self.aveNum=20
 
 
     def add_args(self, parser):
@@ -39,7 +41,8 @@ class SymNormPipeline(CmdPipeline):
         parser.add_argument('--mList', type=int, nargs=3, default=None, help='stream length \n')
         parser.add_argument('--cList', type=int, nargs=3, default=None, help='sketch table column\n')
         parser.add_argument('--rList', type=int, nargs=3, default=None, help='sketch table row\n')
-        parser.add_argument('--wRate', type=float, default=None, help='sliding window size\n')
+        parser.add_argument('--wRate', type=int, default=None, help='sliding window 1/rate\n')
+        # parser.add_argument('--w', type=int, default=None, help='sliding window size\n')
         
         # ===========================  LOOP  ================================
         parser.add_argument('--load', action = 'store_true', help='Sniff or load packets\n')
@@ -64,7 +67,8 @@ class SymNormPipeline(CmdPipeline):
         self.mList = self.get_loop_from_arg('mList')
         self.cList = self.get_loop_from_arg('cList')
         self.rList = self.get_loop_from_arg('rList')
-        self.wRate = self.get_arg('wRate',default =0.9)
+        # self.w = self.get_arg('w',default = None)
+        self.wRate = self.get_arg('wRate',default = 4)
         self.loop = self.get_arg('loop')
         if self.loop == 'csL':
             m = self.mList[-1]
@@ -101,7 +105,6 @@ class SymNormPipeline(CmdPipeline):
         super().run()
         stream = self.run_step_stream()
         # stream = list(range(1, self.mList[-1]+1))
-        print(stream)
         assert (len(stream) >= self.mList[-1])
         results = self.run_step_loop(stream)
         self.run_step_analyze(results)
@@ -115,7 +118,8 @@ class SymNormPipeline(CmdPipeline):
 
     def run_step_loop(self,stream):
         results = get_norms(self.mList, self.rList, self.cList, self.normType, stream,  self.n,\
-             wRate=self.wRate,sRate=0.1, device=self.device, isNearest=True, isUniSampled=self.isUniSampled)
+                                aveNum=self.aveNum, w=self.w, wRate=self.wRate,sRate=0.1, device=self.device, \
+                                isNearest=False, isRatio=True, isUniSampled=self.isUniSampled)
         return results
 
     def run_step_analyze(self, results):

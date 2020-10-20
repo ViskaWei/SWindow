@@ -42,22 +42,31 @@ def get_windowed_id(csvs, w, size =2):
     for csv in csvs:
         ids  = np.append(ids, csv.id)
         del csv
-    wId = ids[-1] - w
+    # print(ids)
+    wId = ids[-1]+1 - w
     closeIds=np.argsort(abs(ids- wId))[:size]
+    id1,id2 = ids[closeIds]
+    diff = id2-id1
+    c2 = (wId-id1)/(diff)
+    c1 = (id2-wId)/(diff)
+    # print(id1,id2,wId, c1,c2)
     # print('ids',ids,'closet', closeIds)
-    return closeIds 
+    return closeIds, c1,c2
 
-def get_averaged_sketched_norm(aveNum, normType, stream, w, m, c, r, device, isNearest = True, toNumpy=True):
+def get_averaged_sketched_norm(aveNum, normType, stream, w, m, c, r, device, isNearest = True, isRatio=False, toNumpy=True):
     normCsAvg = np.array([])
-    for j in tqdm(range(aveNum)):
+    for j in range(aveNum):
+    # for j in tqdm(range(aveNum)):
         normCs = get_sketched_norm(normType, stream,w, m, int(c),int(r),device, \
-                                                isNearest=True, toNumpy=True)
+                                                isNearest=isNearest, isRatio=isRatio, toNumpy=toNumpy)
         normCsAvg = np.append(normCsAvg, normCs)
     normCs = normCsAvg.mean().round(3)
     normCsStd = normCsAvg.std().round(3)
+    print(normCs, normCsStd)
+
     return normCs, normCsStd
 
-def get_sketched_norm(normType, stream, w, m, c, r, device, isNearest = True, toNumpy=True):
+def get_sketched_norm(normType, stream, w, m, c, r, device, isNearest = False, isRatio=True, toNumpy=True):
     streamTr=torch.tensor(stream[:m], dtype=torch.int64)
     assert len(streamTr) == m
     norm_fn = norm_function(normType, isTorch=True)
@@ -67,10 +76,14 @@ def get_sketched_norm(normType, stream, w, m, c, r, device, isNearest = True, to
         # t0 = time()
         csvs, norms = update_sketchs(i,norm_fn, csvs, streamTr[i], c,r,device)
         # print(time()-t0, len(csvs), norms)
-    closeIds = get_windowed_id(csvs, w)
+    closeIds, c1,c2 = get_windowed_id(csvs, w)
+    # print(norms, closeIds)
     logging.debug(norms)
     if isNearest:
         norm = norms[closeIds[0]]
+    elif isRatio:
+        # print(norms[closeIds])
+        norm = c1*norms[closeIds[0]] + c2*norms[closeIds[1]]
     else:
         norm = norms[closeIds].mean()
     if toNumpy: norm = float(norm.cpu().detach().numpy())

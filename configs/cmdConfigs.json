@@ -2,7 +2,7 @@
     "seed": 922,
     "name": "",
     "in": "./data/stream",
-    "out": "t1",
+    "out": "ratio",
     "device":"cpu"
 }
 
