@@ -18,7 +18,7 @@ class CmdPipeline():
         self.device=None
         ######################### Init ########################
         
-    def add_args(self,parser):
+    def add_args(self, parser):
         parser.add_argument('--config', type=str, nargs='+', help='Load config from json file.')
         parser.add_argument('--seed', type=int, help='Set random\n' )
         parser.add_argument('--in', type=str, help='input dir\n')
@@ -130,12 +130,9 @@ class CmdPipeline():
             logging.info('Creating directory {}'.format(dir))
         except:
             logging.info('Output directory not Empty, Replacing might occurs')
-      # elif os.path.exists(dir):
+        # os.path.exists(dir):
         #     if len(os.listdir(dir)) != 0:
         #         print('Output directory not Empty, Replacing might occurs')
-        # else:
-        #     logging.info('Creating output directory {}'.format(dir))
-        #     os.makedirs(dir)
 
     def init_logging(self, outdir):
         self.setup_logging(os.path.join(outdir, type(self).__name__.lower() + '.log'))

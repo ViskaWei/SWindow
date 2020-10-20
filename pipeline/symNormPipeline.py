@@ -13,11 +13,7 @@ from util.util import get_stream, get_norms, get_analyze_pd, get_rList,get_cList
 # TESTSET = '/home/swei20/SymNormSlidingWindows/test/data/packets/test100.pcap'
 # STREAMPATH = 'traffic'
 # # path = os.path.join(DATADIR, DATASET)
-# device = 'cpu'
-# # outIdx = '_sport_r16'
-# # outIdx = '_src_final'
-# outIdx = 'test'
-# # outIdx = '_rd_r12'
+
 import torch
 torch.random.manual_seed(42)
 
@@ -33,8 +29,7 @@ class SymNormPipeline(CmdPipeline):
         self.ftr = None
         self.isUniSampled=None
         self.wRate = None
-        self.pdCol = ['errCs','n','m','w','c','r', 'cr', 'ex', 'cs','std','un','errUn']
-        
+        self.pdCol = ['errCs','n','m','w','c','r', 'cr', 'ex', 'cs','un','errUn']
         self.save={'stream':False}
 
 
@@ -72,13 +67,13 @@ class SymNormPipeline(CmdPipeline):
         self.wRate = self.get_arg('wRate',default =0.9)
         self.loop = self.get_arg('loop')
         if self.loop == 'csL':
-            m = self.mList[0]
+            m = self.mList[-1]
             self.isUniSampled = False
-            self.name = self.loop + 'm' + str(m)
+            self.name = self.loop + '_m' + str(m)
         elif self.loop == 'mL':
             self.isUniSampled = True
             self.cr = int(np.log2(self.cList[0]*self.rList[0]))
-            self.name = self.loop + 'cr' + str(self.cr)
+            self.name = self.loop + '_cr' + str(self.cr)
 
     def apply_norm_args(self):
         normStr = self.get_arg('norm')
@@ -93,9 +88,10 @@ class SymNormPipeline(CmdPipeline):
 
 
     def apply_name_args(self):
-        name = self.ftr + '_' + self.normType + '_' + self.name
+        name = self.ftr + '_' + self.normType + '_' + self.name + '_'
         now = datetime.now()
         self.name = name + now.strftime("%m%d_%H:%M")
+        print(self.name)
         # self.logName = self.logdir + name
     
 
@@ -104,7 +100,9 @@ class SymNormPipeline(CmdPipeline):
     def run(self):
         super().run()
         stream = self.run_step_stream()
-        # stream = list(range(self.mList[-1]))
+        # stream = list(range(1, self.mList[-1]+1))
+        print(stream)
+        assert (len(stream) >= self.mList[-1])
         results = self.run_step_loop(stream)
         self.run_step_analyze(results)
 

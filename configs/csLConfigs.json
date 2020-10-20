@@ -3,10 +3,9 @@
         "./configs/cmdConfigs.json"
     ],
     "loop": "csL",
-    "mList": [2, 0, 1],
+    "mList": [2, 10, 1],
     "cList": [2, 5, 6],
-    "rList": [2, 3, 1],
-    "normDim":2,
+    "rList": [2, 4, 1],
     "wRate": 0.9,
     "load": true
 }
