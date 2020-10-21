@@ -21,42 +21,48 @@ def get_stream(ftr=None, n=None,m=None,HH=True, pckPath = None, isLoad = True, i
 
 def get_norms(mList, rList, cList, normType, stream, n, \
                 w=None, wRate=0.9,sRate=0.1, device=None, aveNum=None, \
-                isNearest=False, isRatio=True, isUniSampled=False):
+                mode=None, isUniSampled=False):
     results = []
     for m in mList:
     # for m in tqdm(mList):
         m = int(m)    
         stream0 = stream[:m]
-        if w is None:
-            w = int(m//wRate)
-            assert w== (m//wRate) 
+        # if w is None:
+        w = int(m*wRate)
+        # assert (w- (m//wRate)) < 0.1
         assert w<=m
-        logging.debug(f'stream:{stream0}|w:{w}')
+        # logging.debug(f'stream:{stream0}|w:{w}')
         # w = min(int(m*wRate), wmin+1)
         if rList is None: rList = get_rList(m,delta=0.05, l=2, fac=False,gap=4)
         if cList is None: cList = get_cList(m,rList[0])
-        normEx, normUn,errUn = get_estimated_norm(normType, stream0, n, w, sRate=sRate,isUniSampled=isUniSampled)
-        # print(normEx, normUn, errUn)
+        normEx, normUn,errUn,unStd = get_estimated_norm(normType, stream0, n, w, sRate=sRate,isUniSampled=isUniSampled,aveNum=aveNum)
+        print(normEx, normUn, errUn)
         for r in rList:
         # for r in tqdm(rList):
             for c in cList:
                 cr = int(np.log2(c*r))
-                normCs, normStd = get_averaged_sketched_norm(aveNum, normType, stream0, w, m, int(c),int(r),device, \
-                                                isNearest=isNearest, isRatio=isRatio, toNumpy=True)
-                errCs = np.round(abs(normEx - normCs)/normEx,3)
-
-                output = [errCs,normStd, n,m,w,c,r,cr, normEx,normCs, normUn, errUn]
-                logging.info(output)
+                if False:
+                    normCs, normStd = get_averaged_sketched_norm(aveNum, normType, stream0, w, m, int(c),int(r),device, \
+                                                mode=mode, toNumpy=True)
+                    errCs = np.round(abs(normEx - normCs)/normEx,3)
+                    print(normCs, normCsStd)
+                    normStd= np.round(normStd/normEx,3)
+                else:
+                    errCs, normCs=0,0
+                    normStd = unStd
+                output = [aveNum, errCs,normStd, m,w,c,r,cr, normEx,normCs, normUn, errUn, n]
+                # logging.info(output)
                 # print(output)
                 results.append(output)
+        print(normUn, errUn, unStd)
     return results
 
 
 def get_analyze_pd(outputs, outName, colName, outDir='./out/'):
     resultPd = pd.DataFrame(data = outputs, columns = colName)
-    print(resultPd)
+    # print(resultPd)
     resultPd.to_csv(f'{outDir}{outName}.csv', index = False)
-    return None
+    return resultPd
 
 
 def get_name(normType, ftr, isClosest=None, add='',logdir='./log/'):

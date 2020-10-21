@@ -115,9 +115,9 @@ class CmdPipeline():
     def apply_output_args(self):       
         out = self.get_arg('out')
         self.outDir = './out' + '_' + out + '/'
-        self.logDir = './log' + '_' + out + '/'
+        # self.logDir = './log' + '_' + out + '/'
         self.create_output_dir(self.outDir)
-        self.create_output_dir(self.logDir)
+        # self.create_output_dir(self.logDir)
 
             
     def apply_debug_args(self):
@@ -127,8 +127,9 @@ class CmdPipeline():
     def create_output_dir(self, dir, cont=False):
         try: 
             os.mkdir(dir)
-            logging.info('Creating directory {}'.format(dir))
+            # logging.info('Creating directory {}'.format(dir))
         except:
+            pass
             logging.info('Output directory not Empty, Replacing might occurs')
         # os.path.exists(dir):
         #     if len(os.listdir(dir)) != 0:

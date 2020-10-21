@@ -13,5 +13,6 @@ def main():
     p.prepare()
     p.run()
 
+    # print(p.args)
 if __name__ == "__main__":
     main()

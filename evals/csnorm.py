@@ -57,7 +57,7 @@ class CSNorm(object):
     # @staticmethod
     def get_norm(self):
         norms = self.norm_fn(self.table)
-        logging.debug(f'norms: {norms}')
+        # logging.debug(f'norms: {norms}')
         # print(norms)
         assert(len(norms)==self.r)
         if self.r<4:
