@@ -1,16 +1,19 @@
 TEST_CONFIG=./configs/testConfigs.json
 CSL_CONFIG=./configs/csLConfigs.json
 ML_CONFIG=./configs/mLConfigs.json
-CONFIG=($CSL_CONFIG $ML_CONFIG)
-FTR=(rd src)
+# CONFIG=($CSL_CONFIG $ML_CONFIG)
+# CONFIG=($CSL_CONFIG)
+# CONFIG=($ML_CONFIG)
+
+FTR=(src)
 NORM=(L T)
-# CONFIG=($TEST_CONFIG)
+CONFIG=($TEST_CONFIG)
 
 for norm in "${NORM[@]}"; do
     if [ $norm == L ]
     then
-        NORMDIM=(1 2)
-        p=elephant
+        NORMDIM=(2)
+        p=v100
     elif [ $norm == T ]
     then
         NORMDIM=(8 16)

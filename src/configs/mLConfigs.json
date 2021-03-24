@@ -1,0 +1,14 @@
+{
+    "config": [
+        "./configs/cmdConfigs.json"
+    ],
+    "loop": "mL",
+    "mList": [2, 8, 6],
+    "cList": [2, 7, 1],
+    "rList": [2, 3, 1],
+    "wRate": 0.25,
+    "load": true,
+    "out": "final_mL_src_w2_ave50_m13",
+    "aveNum": 50,
+    "mode": "mean"   
+}

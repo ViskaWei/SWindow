@@ -1,0 +1,14 @@
+{
+    "config": [
+        "./configs/cmdConfigs.json"
+    ],
+    "loop": "csL",
+    "out": "final_csL_src_w2_mean_ave50_m13",
+    "mList": [2, 13, 1],
+    "cList": [2, 5, 6],
+    "rList": [2, 4, 1],
+    "wRate": 0.25,
+    "load": true,
+    "aveNum": 50,
+    "mode": "mean"    
+}

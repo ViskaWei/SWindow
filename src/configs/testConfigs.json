@@ -1,0 +1,18 @@
+{
+    "config": [
+        "./configs/cmdConfigs.json"
+    ],
+    "loop": "mL",
+    "mList": [2, 8, 6],
+    "cList": [2, 7, 1],
+    "rList": [2, 3, 1],
+    "ftr": "src",
+    "norm":"L",
+    "normDim":2,
+    "wRate": 0.25,
+    "load": true,
+    "out": "final_src_mL_uniform",
+    "aveNum": 10,
+    "mode": "mean",
+    "print": true
+}

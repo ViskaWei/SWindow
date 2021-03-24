@@ -1,9 +1,0 @@
-{
-    "seed": 922,
-    "name": "",
-    "in": "./data/stream",
-    "out": "ratio",
-    "device":"cpu"
-}
-
-
