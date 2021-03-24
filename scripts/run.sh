@@ -1,8 +1,7 @@
 #!/bin/bash
 
 # Work around issues with saving weights when running on multiple threads
-# export HDF5_USE_FILE_LOCKING=FALSE
-source /datascope/slurm/miniconda3/bin/activate ptorch
+export HDF5_USE_FILE_LOCKING=FALSE
 
 PARAMS=""
 COMMAND="$1"
@@ -23,11 +22,11 @@ fi
 # Parse slurm and other parameters
 
 PYTHON_DEBUG=0
-SBATCH_PARTITION='elephant'
-SBATCH_MEM=32G
-SBATCH_TIME="24:00:00"
+SBATCH_PARTITION=default
+SBATCH_MEM=16G
+SBATCH_TIME="12:00:00"
 SBATCH_GPUS=0
-SBATCH_CPUS_PER_TASK=32
+SBATCH_CPUS_PER_TASK=16
 
 while (( "$#" )); do
     case "$1" in
@@ -74,19 +73,24 @@ while (( "$#" )); do
     esac
 done
 
+if [[ $PYTHON_DEBUG == "1" ]]; then
+    #DEBUGGER="-m ptvsd --host localhost --port 5678 --wait"
+    DEBUGGER="-m debugpy --listen 0.0.0.0:7811 --wait-for-client"
+    PARAMS="$PARAMS --debug"
+else
+    DEBUGGER=""
+fi
+
+set -o noglob
 if [[ $RUNMODE == "run" ]]; then
-    if [[ $PYTHON_DEBUG == "1" ]]; then
-        exec python -m ptvsd --host localhost --port 5678 --wait $COMMAND $PARAMS --debug
-    else
-        exec python $COMMAND $PARAMS
-    fi
+    exec python $DEBUGGER $COMMAND $PARAMS
 elif [[ $RUNMODE == "srun" ]]; then
     exec srun --partition $SBATCH_PARTITION \
               --gres gpu:$SBATCH_GPUS \
               --cpus-per-task $SBATCH_CPUS_PER_TASK \
               --mem $SBATCH_MEM \
               --time $SBATCH_TIME \
-              python $COMMAND $PARAMS
+              python $DEBUGGER $COMMAND $PARAMS
 elif [[ $RUNMODE == "sbatch" ]]; then
     sbatch <<EOF
 #!/bin/bash
@@ -105,5 +109,5 @@ mv \$out \$outdir/slurm.out
 EOF
 else
     echo "Invalid RUNMODE: $RUNMODE"
-    exit -1
 fi
+set +o noglob
