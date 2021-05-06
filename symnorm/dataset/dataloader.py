@@ -1,5 +1,5 @@
 import numpy as np
-from dataset.traffic import get_sniffed_stream
+from symnorm.dataset.traffic import get_sniffed_stream
 
 
 def load_traffic_stream(ftr, isTest, isLoad, m, pckPath):

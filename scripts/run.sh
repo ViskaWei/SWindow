@@ -26,7 +26,7 @@ SBATCH_PARTITION=default
 SBATCH_MEM=16G
 SBATCH_TIME="12:00:00"
 SBATCH_GPUS=0
-SBATCH_CPUS_PER_TASK=16
+SBATCH_CPUS_PER_TASK=64
 
 while (( "$#" )); do
     case "$1" in
@@ -86,7 +86,6 @@ if [[ $RUNMODE == "run" ]]; then
     exec python $DEBUGGER $COMMAND $PARAMS
 elif [[ $RUNMODE == "srun" ]]; then
     exec srun --partition $SBATCH_PARTITION \
-              --gres gpu:$SBATCH_GPUS \
               --cpus-per-task $SBATCH_CPUS_PER_TASK \
               --mem $SBATCH_MEM \
               --time $SBATCH_TIME \
@@ -111,3 +110,5 @@ else
     echo "Invalid RUNMODE: $RUNMODE"
 fi
 set +o noglob
+
+#   --gres gpu:$SBATCH_GPUS \

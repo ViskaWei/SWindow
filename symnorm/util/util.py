@@ -11,7 +11,7 @@ from evals.evalNormCS import get_sketched_norm, get_averaged_sketched_norm
 
 def get_stream(ftr = None, n = None, m = None, HH = True, pckPath = None, isLoad = True, isTest = False):
     m = int(m)
-    if ftr =='rd':
+    if ftr == 'rd':
         stream = create_random_stream(n,m, HH=HH, HH3=None)
     else:
         stream = load_traffic_stream(ftr, isTest, isLoad, m, pckPath)
@@ -25,12 +25,12 @@ def get_norms(mList, rList, cList, normType, stream, n, \
     results = []
     for m in mList:
     # for m in tqdm(mList):
-        m = int(m)    
+        # m = int(m)    
         stream0 = stream[:m]
         # if w is None:
         w = int(m*wRate)
         # assert (w- (m//wRate)) < 0.1
-        assert w<=m
+        assert w <= m
         # logging.debug(f'stream:{stream0}|w:{w}')
         # w = min(int(m*wRate), wmin+1)
         if rList is None: rList = get_rList(m,delta=0.05, l=2, fac=False,gap=4)

@@ -1,0 +1,20 @@
+{
+    "config": [
+        "/home/swei20/SymNormSlidingWindows/configs/baseConfigs.json"
+    ],
+    "loop": "mL",
+    "mList": [2, 7, 1],
+    "cList": [2, 3, 3],
+    "rList": [2, 2, 3],
+    "wRList": [2, 0, 1],
+
+    "ftr": "src",
+    "norm":"L",
+    "normDim":2,
+    "wRate": 1,
+    "load": true,
+    "out": "./out/",
+    "aveNum": 5,
+    "mode": "mean",
+    "test": true
+}

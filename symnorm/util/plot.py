@@ -43,14 +43,14 @@ def get_pd(DATADIR, filename, FILE2=None, errbar=False, save=True,crVal=None):
         return outs
     if loop=='mL':
         plot_error(ftr, out, normType, errbar,crVal=crVal)  
-    elif loop == 'csL':
+    elif loop == 'sL':
         plot_size_error(ftr,out, normType,errbar =errbar)
     if save: plt.savefig(f'/home/swei20/SymNormSlidingWindows/imgs/{ftr}_{normType}_{loop}.png',bbox_inches = 'tight')
     return out,ftr,normType
 
 def plot_loops(loop,ftr,outs,normTypes,crVal=None,errbar=True,save=False):
-    if loop =='csL':
-        plot_csL(ftr, outs, normTypes, errbar=errbar,save=save)
+    if loop =='sL':
+        plot_sL(ftr, outs, normTypes, errbar=errbar,save=save)
     elif loop=='mL':
         plot_topk_norms(ftr, outs, normTypes, crVal=crVal, save=save)
 
@@ -100,7 +100,7 @@ def plot_size_error(ftr, out, normType, errbar=False):
     get_title(ftr)
 
 
-def plot_csL(ftr, outs, normTypes, errbar=True,save=True):
+def plot_sL(ftr, outs, normTypes, errbar=True,save=True):
     c = ['k','r','b']
     for ii, out in enumerate(outs):
         outR = out
@@ -112,7 +112,7 @@ def plot_csL(ftr, outs, normTypes, errbar=True,save=True):
     plt.xlabel('log sketch size')
 #     plt.ylim(0,0.2)
     get_title(ftr)
-    if save: plt.savefig(f'/home/swei20/SymNormSlidingWindows/imgs/{ftr}_csLoop.png',bbox_inches = 'tight')
+    if save: plt.savefig(f'/home/swei20/SymNormSlidingWindows/imgs/{ftr}_sLoop.png',bbox_inches = 'tight')
 
 def get_title(ftr):
     if ftr =='rd':
@@ -148,7 +148,7 @@ def get_title(ftr):
 #         return outs
 #     if loop=='mL':
 #         plot_error(ftr, out, normType, errbar,crVal=crVal)  
-#     elif loop == 'csL':
+#     elif loop == 'sL':
 #         plot_size_error(out, ftr, normType)
 #     if save: plt.savefig(f'/home/swei20/SymNormSlidingWindows/imgs/{ftr}_{normType}_{loop}.png',bbox_inches = 'tight')
 #     return out,ftr,normType

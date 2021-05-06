@@ -4,7 +4,7 @@ import pandas as pd
 from tqdm import tqdm
 import logging
 from datetime import datetime
-from pipeline.cmdPipeline import CmdPipeline
+from src.pipeline.streamPipeline import StreamPipeline
 from dataset.randomstream import create_random_stream
 from util.util import get_stream, get_norms, get_analyze_pd, get_rList,get_cList
 
@@ -17,13 +17,11 @@ from util.util import get_stream, get_norms, get_analyze_pd, get_rList,get_cList
 import torch
 torch.random.manual_seed(42)
 
-class SymNormPipeline(CmdPipeline):
+class SketchPipeline(StreamPipeline):
     def __init__(self, logging=True):
         super().__init__()
-        self.mList=None
         self.cList=None
         self.rList=None
-        self.n = None
         self.loop=None
         self.normType = None
         self.ftr = None
@@ -40,7 +38,6 @@ class SymNormPipeline(CmdPipeline):
     def add_args(self, parser):
         super().add_args(parser)
         # ===========================  LOOP  ================================
-        parser.add_argument('--mList', type=int, nargs=3, default=None, help='stream length \n')
         parser.add_argument('--cList', type=int, nargs=3, default=None, help='sketch table column\n')
         parser.add_argument('--rList', type=int, nargs=3, default=None, help='sketch table row\n')
         parser.add_argument('--wRate', type=float, default=None, help='sliding window 1/rate\n')
@@ -48,32 +45,30 @@ class SymNormPipeline(CmdPipeline):
         # parser.add_argument('--w', type=int, default=None, help='sliding window size\n')
         # ===========================  LOOP  ================================
         parser.add_argument('--load', action = 'store_true', help='Sniff or load packets\n')
-        parser.add_argument('--test', action = 'store_true', help='Test or original size\n')
+
         parser.add_argument('--saveStream', action = 'store_true', help='Saving stream\n')
         # ===========================  NORM  ================================
         parser.add_argument('--norm', type=str, choices=['L','T'], help='Lp-norm or Topk-norm\n')
         parser.add_argument('--normDim', type=int, help='norm dimension\n')
-        parser.add_argument('--ftr', type=str, choices=['rd','src'], help='rd or src \n')
         parser.add_argument('--mode', type=str, choices=['nearest','ratio', 'mean'], help='nearest or interpolated or mean\n')
         parser.add_argument('--print', action='store_true', help='printing results\n')
 
 ################################################# PREPARE ##############################################
     def prepare(self):
         super().prepare()
-        self.apply_loop_args()
+        self.apply_table_args()
         self.apply_dataset_args()
         self.apply_norm_args()
         self.apply_name_args()
 
-    def apply_loop_args(self):
-        self.mList = self.get_loop_from_arg('mList')
+    def apply_table_args(self):
         self.cList = self.get_loop_from_arg('cList')
         self.rList = self.get_loop_from_arg('rList')
         # self.w = self.get_arg('w',default = None)
         self.aveNum = self.get_arg('aveNum', default = 1)
         self.wRate = self.get_arg('wRate', default = 4)
         self.loop = self.get_arg('loop')
-        if self.loop == 'csL':
+        if self.loop == 'sL':
             m = self.mList[-1]
             self.isUniSampled = False
             self.name ='_m' + str(m)
@@ -115,8 +110,8 @@ class SymNormPipeline(CmdPipeline):
         self.run_step_analyze(results)
 
     def run_step_stream(self):
-        stream, self.n =get_stream(ftr=self.ftr, n=self.n,m=self.mList[-1],HH=True,\
-             pckPath = None, isLoad = self.isLoad, isTest=self.isTest)
+        stream, self.n =get_stream(ftr=self.ftr, n=self.n, m=self.mList[-1], HH=True,\
+             pckPath=None, isLoad=self.isLoad, isTest=self.isTest)
         # print(stream)
         # logging.info(f'{self.normType}-norm of {self.ftr} Stream {self.mList[-1]} with dict {self.n}.')
         return stream
