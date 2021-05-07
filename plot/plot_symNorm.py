@@ -27,7 +27,7 @@ def plot_mL(self, ax=None):
         ax.plot(df0['m'], df0['errCs'], 'o-', c=color[widx], label = f'Sketch (w = m/{w})')
     
     ax.set_xlabel('stream size m')
-    ax.set_ylabel('abs error of norm')
+    ax.set_ylabel('% error')
     ax.set_title(f"{self.normType} | {self.ftr} | rc = {df['rc'][0]} |")
     ax.set_xscale('log', basex=2)
     # plt.yscale('log', basey=2)
